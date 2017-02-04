@@ -51,15 +51,16 @@ public class MainActivity extends AppCompatActivity {
         Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         startActivityForResult(turnOn, 0);
 
-        Button check = ((Button) findViewById(R.id.search));
-        final EditText robotNum = ((EditText) findViewById(R.id.robotnum));
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
+                Button check = ((Button) findViewById(R.id.search));
+                final EditText robotNum = ((EditText) findViewById(R.id.robotnum));
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
                 Toast.makeText(MainActivity.this, String.valueOf(robotNum==null),
                         Toast.LENGTH_LONG).show();
             }
         });
+        assert check != null;
         check.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
