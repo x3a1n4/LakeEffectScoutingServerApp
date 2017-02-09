@@ -170,17 +170,29 @@ public class MainActivity extends AppCompatActivity {
                                                 Log.d("HELLO", "");
                                                 try {
 
-                                                    byte[] bytes = new byte[1000000];
+                                                    byte[] bytes = new byte[200];
+                                                    Log.d("HELLO", "Reading" + bytes);
                                                     int amount = in.read(bytes);
+                                                    in.read();
+                                                    Log.d("HELLO", "Read" + amount);
                                                     if(amount>0)  bytes = Arrays.copyOfRange(bytes, 0, amount);//puts data into bytes and cuts bytes
                                                     else continue;
                                                     String message = new String(bytes, Charset.forName("UTF-8"));
                                                     if (bytes.length > 0){
+                                                        runOnUiThread(new Runnable() {
+                                                            @Override
+                                                            public void run() {
+                                                                Toast.makeText(MainActivity.this, "Starting To Save......",
+                                                                        Toast.LENGTH_LONG).show();
+                                                            }
+                                                        });
                                                         save(data + message);
                                                         out.write("done".getBytes(Charset.forName("UTF-8")));
+                                                        Log.d("HELLO", "DONE SENT" + bytes);
                                                         data = "";
                                                     }else{
                                                         data += message;
+                                                        Log.d("HELLO", "Useless" + amount);
                                                     }
                                                     final byte[] bytes2 = bytes;
                                                     Log.d("HELLO", "KJLDJJLADS" + bytes);
