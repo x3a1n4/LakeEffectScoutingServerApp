@@ -173,7 +173,6 @@ public class MainActivity extends AppCompatActivity {
                                                     byte[] bytes = new byte[200];
                                                     Log.d("HELLO", "Reading" + bytes);
                                                     int amount = in.read(bytes);
-                                                    in.read();
                                                     Log.d("HELLO", "Read" + amount);
                                                     if(amount>0)  bytes = Arrays.copyOfRange(bytes, 0, amount);//puts data into bytes and cuts bytes
                                                     else continue;
@@ -190,9 +189,9 @@ public class MainActivity extends AppCompatActivity {
                                                         out.write("done".getBytes(Charset.forName("UTF-8")));
                                                         Log.d("HELLO", "DONE SENT" + bytes);
                                                         data = "";
-                                                    }else{
-                                                        data += message;
                                                         Log.d("HELLO", "Useless" + amount);
+                                                    }else {
+                                                        data += message;
                                                     }
                                                     final byte[] bytes2 = bytes;
                                                     Log.d("HELLO", "KJLDJJLADS" + bytes);
