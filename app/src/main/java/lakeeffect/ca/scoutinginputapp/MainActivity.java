@@ -3,6 +3,7 @@ package lakeeffect.ca.scoutinginputapp;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothServerSocket;
 import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -126,109 +127,131 @@ public class MainActivity extends AppCompatActivity {
 
         Button connect = ((Button) findViewById(R.id.connect));
         assert(connect != null);
-        connect.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v) {
-                Set<BluetoothDevice> pairedDevices = ba.getBondedDevices();
-                final BluetoothDevice[] devices = pairedDevices.toArray(new BluetoothDevice[0]);
-                String[] names = new String[devices.length];
-                if (pairedDevices.size() > 0) {
-                    for (int i=0;i<devices.length;i++) {
-                        names[i] = devices[i].getName();
+//        Thread bluetooth = new BluetoothConnection();/
+
+        Thread bluetooth = new Thread(){
+            public void run() {
+                while(true) {
+                    try {
+                        final BluetoothServerSocket bss = ba.listenUsingRfcommWithServiceRecord("SteamworksScoutingApp", UUID.fromString("6ba6afdc-6a0a-4b1d-a2bf-f71ac108b636"));
+                        bluetoothsocket = bss.accept();
+                        System.out.println("accepted");
+                        out = bluetoothsocket.getOutputStream();
+                        in = bluetoothsocket.getInputStream();
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                    new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Which device should I connect to?")
-                            .setMultiChoiceItems(names, null, new DialogInterface.OnMultiChoiceClickListener(){
-                                @Override
-                                public void onClick(DialogInterface dialog, final int which, boolean isChecked) {
-                                    dialog.dismiss();
-                                    thread = new Thread(){
-                                        public void run(){
-                                            BluetoothSocket bluetoothsocket = null;
-                                            OutputStream out = null;
-                                            InputStream in = null;
-                                            try {
-
-                                                bluetoothsocket = devices[which].createRfcommSocketToServiceRecord(UUID.fromString("6ba6afdc-6a0a-4b1d-a2bf-f71ac108b636"));
-                                                bluetoothsocket.connect();
-                                                out = bluetoothsocket.getOutputStream();
-                                                in = bluetoothsocket.getInputStream();
-                                                //CONNECTED!!
-                                                runOnUiThread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        Toast.makeText(MainActivity.this, "connected!",
-                                                                Toast.LENGTH_LONG).show();
-                                                    }
-                                                });
-                                            } catch (IOException e) {
-                                                e.printStackTrace();
-                                            }
-                                            String data = "";
-                                            Log.d("HELLO", "KJLDJJLADS");
-                                            while(out != null && in != null && bluetoothsocket.isConnected()){
-                                                Log.d("HELLO", "");
-                                                try {
-
-                                                    byte[] bytes = new byte[200];
-                                                    Log.d("HELLO", "Reading" + bytes);
-                                                    int amount = in.read(bytes);
-                                                    Log.d("HELLO", "Read" + amount);
-                                                    if(amount>0)  bytes = Arrays.copyOfRange(bytes, 0, amount);//puts data into bytes and cuts bytes
-                                                    else continue;
-                                                    String message = new String(bytes, Charset.forName("UTF-8"));
-                                                    if (bytes.length > 0){
-                                                        runOnUiThread(new Runnable() {
-                                                            @Override
-                                                            public void run() {
-                                                                Toast.makeText(MainActivity.this, "Starting To Save......",
-                                                                        Toast.LENGTH_LONG).show();
-                                                            }
-                                                        });
-                                                        save(data + message);
-                                                        out.write("done".getBytes(Charset.forName("UTF-8")));
-                                                        Log.d("HELLO", "DONE SENT" + bytes);
-                                                        data = "";
-                                                        Log.d("HELLO", "Useless" + amount);
-                                                    }else {
-                                                        data += message;
-                                                    }
-                                                    final byte[] bytes2 = bytes;
-                                                    Log.d("HELLO", "KJLDJJLADS" + bytes);
-
-                                                } catch (IOException e) {
-                                                    e.printStackTrace();
-                                                }
-
-
-                                            }
-                                            Log.d("HELLO", "KJLDJJLADS sssssss");
-                                            runOnUiThread(new Runnable() {
-                                                @Override
-                                                public void run() {
-                                                    Toast.makeText(MainActivity.this, "Connection Ended",
-                                                            Toast.LENGTH_LONG).show();
-                                                }
-                                            });
-                                        }
-                                    };
-                                    thread.start();
-                                }
-                            })
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .show();
-                }else{
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(MainActivity.this, "No devices paired...",
-                                    Toast.LENGTH_LONG).show();
-                        }
-                    });
-                    return;
+                    if (bluetoothsocket.isConnected()) {
+                        new BluetoothConnection(bluetoothsocket, out, in).start();
+                    }
                 }
             }
-        });
+        };
+        bluetooth.start();
+
+//        connect.setOnClickListener(new View.OnClickListener(){
+//            @Override
+//            public void onClick(View v) {
+////                Set<BluetoothDevice> pairedDevices = ba.getBondedDevices();
+////                final BluetoothDevice[] devices = pairedDevices.toArray(new BluetoothDevice[0]);
+////                String[] names = new String[devices.length];
+////                if (pairedDevices.size() > 0) {
+////                    for (int i=0;i<devices.length;i++) {
+////                        names[i] = devices[i].getName();
+////                    }
+//////                    new AlertDialog.Builder(MainActivity.this)
+//////                            .setTitle("Which device should I connect to?")
+//////                            .setMultiChoiceItems(names, null, new DialogInterface.OnMultiChoiceClickListener(){
+//////                                @Override
+//////                                public void onClick(DialogInterface dialog, final int which, boolean isChecked) {
+//////                                    dialog.dismiss();
+//////                                    thread = new Thread(){
+//////                                        public void run(){
+//////                                            BluetoothSocket bluetoothsocket = null;
+//////                                            OutputStream out = null;
+//////                                            InputStream in = null;
+//////                                            try {
+//////
+//////                                                bluetoothsocket = devices[which].createRfcommSocketToServiceRecord(UUID.fromString("6ba6afdc-6a0a-4b1d-a2bf-f71ac108b636"));
+//////                                                bluetoothsocket.connect();
+//////                                                out = bluetoothsocket.getOutputStream();
+//////                                                in = bluetoothsocket.getInputStream();
+//////                                                //CONNECTED!!
+//////                                                runOnUiThread(new Runnable() {
+//////                                                    @Override
+//////                                                    public void run() {
+//////                                                        Toast.makeText(MainActivity.this, "connected!",
+//////                                                                Toast.LENGTH_LONG).show();
+//////                                                    }
+//////                                                });
+//////                                            } catch (IOException e) {
+//////                                                e.printStackTrace();
+//////                                            }
+//////                                            String data = "";
+//////                                            Log.d("HELLO", "KJLDJJLADS");
+//////                                            while(out != null && in != null && bluetoothsocket.isConnected()){
+//////                                                Log.d("HELLO", "");
+//////                                                try {
+//////
+//////                                                    byte[] bytes = new byte[200];
+//////                                                    Log.d("HELLO", "Reading" + bytes);
+//////                                                    int amount = in.read(bytes);
+//////                                                    Log.d("HELLO", "Read" + amount);
+//////                                                    if(amount>0)  bytes = Arrays.copyOfRange(bytes, 0, amount);//puts data into bytes and cuts bytes
+//////                                                    else continue;
+//////                                                    String message = new String(bytes, Charset.forName("UTF-8"));
+//////                                                    if (bytes.length > 0){
+//////                                                        runOnUiThread(new Runnable() {
+//////                                                            @Override
+//////                                                            public void run() {
+//////                                                                Toast.makeText(MainActivity.this, "Starting To Save......",
+//////                                                                        Toast.LENGTH_LONG).show();
+//////                                                            }
+//////                                                        });
+//////                                                        save(data + message);
+//////                                                        out.write("done".getBytes(Charset.forName("UTF-8")));
+//////                                                        Log.d("HELLO", "DONE SENT" + bytes);
+//////                                                        data = "";
+//////                                                        Log.d("HELLO", "Useless" + amount);
+//////                                                    }else {
+//////                                                        data += message;
+//////                                                    }
+//////                                                    final byte[] bytes2 = bytes;
+//////                                                    Log.d("HELLO", "KJLDJJLADS" + bytes);
+//////
+//////                                                } catch (IOException e) {
+//////                                                    e.printStackTrace();
+//////                                                }
+//////
+//////
+//////                                            }
+//////                                            Log.d("HELLO", "KJLDJJLADS sssssss");
+//////                                            runOnUiThread(new Runnable() {
+//////                                                @Override
+//////                                                public void run() {
+//////                                                    Toast.makeText(MainActivity.this, "Connection Ended",
+//////                                                            Toast.LENGTH_LONG).show();
+//////                                                }
+//////                                            });
+//////                                        }
+//////                                    };
+//////                                    thread.start();
+//////                                }
+//////                            })
+//////                            .setIcon(android.R.drawable.ic_dialog_alert)
+//////                            .show();
+////                }else{
+////                    runOnUiThread(new Runnable() {
+////                        @Override
+////                        public void run() {
+////                            Toast.makeText(MainActivity.this, "No devices paired...",
+////                                    Toast.LENGTH_LONG).show();
+////                        }
+////                    });
+////                    return;
+////                }
+//            }
+//        });
     }
 
     @Override
@@ -313,7 +336,7 @@ public class MainActivity extends AppCompatActivity {
         return "";
     }
 
-    public void save(String data){
+    public static void save(String data){
 
         File sdCard = Environment.getExternalStorageDirectory();
 
@@ -333,13 +356,13 @@ public class MainActivity extends AppCompatActivity {
 
             out.write(data);
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(MainActivity.this, "Saved",
-                            Toast.LENGTH_LONG).show();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Toast.makeText(MainActivity.this, "Saved",
+//                            Toast.LENGTH_LONG).show();
+//                }
+//            });
 
             out.close();
             f.close();
