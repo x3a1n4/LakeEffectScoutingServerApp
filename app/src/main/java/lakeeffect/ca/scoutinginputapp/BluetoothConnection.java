@@ -10,28 +10,25 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 
-/**
- * Created by Greg on 2017-02-25.
- */
-
 public class BluetoothConnection extends Thread {
     BluetoothSocket bluetoothsocket = null;
     OutputStream out = null;
     InputStream in = null;
 
-    public BluetoothConnection(BluetoothSocket bluetoothsocket, OutputStream out, InputStream in){
+    MainActivity activity;
+
+    public BluetoothConnection(BluetoothSocket bluetoothsocket, OutputStream out, InputStream in, MainActivity activity){
         this.bluetoothsocket = bluetoothsocket;
         this.out = out;
         this.in = in;
+        this.activity = activity;
     }
 
     public void run(){
         String data = "";
         while(out != null && in != null && bluetoothsocket.isConnected()){
-            Log.d("HELLO", "");
             try {
-
-                byte[] bytes = new byte[200];
+                byte[] bytes = new byte[100000];
                 Log.d("HELLO", "Reading" + bytes);
                 int amount = in.read(bytes);
                 Log.d("HELLO", "Read" + amount);
@@ -39,13 +36,13 @@ public class BluetoothConnection extends Thread {
                 else continue;
                 String message = new String(bytes, Charset.forName("UTF-8"));
                 if (bytes.length > 0){
-//                    runOnUiThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            Toast.makeText(MainActivity.this, "Starting To Save......",
-//                                    Toast.LENGTH_LONG).show();
-//                        }
-//                    });
+                    activity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(activity, "Starting To Save......",
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    });
                     MainActivity.save(data + message);
                     out.write("done".getBytes(Charset.forName("UTF-8")));
                     Log.d("HELLO", "DONE SENT" + bytes);

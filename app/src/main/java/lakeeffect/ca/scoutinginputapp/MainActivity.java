@@ -44,10 +44,17 @@ public class MainActivity extends AppCompatActivity {
 
     boolean searchopen;
 
+    ArrayList<String> deviceNames = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+        intent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
+        startActivityForResult(intent, 3);
+
         final BluetoothAdapter ba = BluetoothAdapter.getDefaultAdapter();
         Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         startActivityForResult(turnOn, 0);
@@ -66,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 File sdcard = Environment.getExternalStorageDirectory();
-                File file = new File(sdcard.getPath() + "/ScoutingData/" + robotNum.getText() +  ".txt");
+                File file = new File(sdcard.getPath() + "/#ScoutingData/" + robotNum.getText() +  ".csv");
                 StringBuilder text = new StringBuilder();
                 if (!file.exists()) {
                     runOnUiThread(new Runnable() {
@@ -142,7 +149,7 @@ public class MainActivity extends AppCompatActivity {
                         e.printStackTrace();
                     }
                     if (bluetoothsocket.isConnected()) {
-                        new BluetoothConnection(bluetoothsocket, out, in).start();
+                        new BluetoothConnection(bluetoothsocket, out, in, MainActivity.this).start();
                     }
                 }
             }
@@ -338,22 +345,28 @@ public class MainActivity extends AppCompatActivity {
 
     public static void save(String data){
 
+        System.out.println(data);
+
         File sdCard = Environment.getExternalStorageDirectory();
 
-        File file = new File(sdCard.getPath() + "/ScoutingData/" + data.split(":")[0] + ".txt");
+        File file = new File(sdCard.getPath() + "/#ScoutingData/" + data.split(":")[0] + ".csv");
 
-        data = data.split(":")[1];
+        String labels = data.split(":")[1];
+        data = data.replaceFirst(data.split(":")[0] + ":" + data.split(":")[1], "");
 
         try {
+            boolean newfile = false;
             file.getParentFile().mkdirs();
             if (!file.exists()) {
                 file.createNewFile();
+                newfile = true;
             }
 
             FileOutputStream f = new FileOutputStream(file, true);
 
             OutputStreamWriter out = new OutputStreamWriter(f);
 
+            if(newfile) out.write(labels);
             out.write(data);
 
 //            runOnUiThread(new Runnable() {
