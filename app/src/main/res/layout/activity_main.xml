@@ -12,7 +12,7 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Connect New Device"
+        android:text="Pull Data From Device"
         android:id="@+id/connect"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />
@@ -22,16 +22,16 @@
         android:layout_height="wrap_content"
         android:inputType="number"
         android:ems="10"
-        android:id="@+id/robotnum"
-        android:layout_above="@+id/search"
+        android:id="@+id/versionNum"
+        android:layout_above="@+id/setVersionNumber"
         android:layout_centerHorizontal="true" />
 
     <Button
         style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Search For Robot Data"
-        android:id="@+id/search"
+        android:text="Set Version Number"
+        android:id="@+id/setVersionNumber"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
 
