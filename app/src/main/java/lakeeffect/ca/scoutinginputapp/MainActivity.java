@@ -47,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
 
     Button connect;
 
+    PullDataThread pullDataThread;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -94,6 +96,18 @@ public class MainActivity extends AppCompatActivity {
                     bluetoothSocket = devices[which].createRfcommSocketToServiceRecord(UUID.fromString("6ba6afdc-6a0a-4b1d-a2bf-f71ac108b636"));
                 } catch (IOException e) {
                     e.printStackTrace();
+                }
+
+                if(pullDataThread == null || !pullDataThread.running) {
+                    pullDataThread = new PullDataThread(bluetoothSocket);
+                    pullDataThread.start();
+
+                }else{
+                    runOnUiThread(new Thread(){
+                        public void run(){
+                            Toast.makeText(MainActivity.this, "Already pulling data, wait until that pull is finished!", Toast.LENGTH_LONG).show();
+                        }
+                    });
                 }
             }
         })
