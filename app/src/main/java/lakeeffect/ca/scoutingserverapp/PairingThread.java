@@ -1,16 +1,4 @@
-package lakeeffect.ca.scoutinginputapp;
-
-import android.app.AlertDialog;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothDevice;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.widget.Toast;
-
-import java.util.Set;
+package lakeeffect.ca.scoutingserverapp;
 
 /**
  * Created by Ajay on 3/3/2017.
