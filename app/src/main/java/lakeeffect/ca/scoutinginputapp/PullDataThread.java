@@ -9,7 +9,7 @@ import java.io.IOException;
  *
  * Class that deals with pulling the data, this class should not be able to be called multiple times
  */
-public class PullDataThread implements Thread{
+public class PullDataThread extends Thread{
 
     boolean running = false;
 
