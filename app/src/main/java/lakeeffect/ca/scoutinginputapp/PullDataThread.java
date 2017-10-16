@@ -21,8 +21,11 @@ public class PullDataThread extends Thread{
     OutputStream out;
     InputStream in;
 
-    public PullDataThread(BluetoothSocket bluetoothSocket){
+    MainActivity mainActivity;
+
+    public PullDataThread(BluetoothSocket bluetoothSocket, MainActivity mainActivity){
         this.bluetoothSocket = bluetoothSocket;
+        this.mainActivity = mainActivity;
     }
 
     @Override
@@ -32,6 +35,11 @@ public class PullDataThread extends Thread{
             bluetoothSocket.connect();
             in = bluetoothSocket.getInputStream();
             out = bluetoothSocket.getOutputStream();
+
+            if(mainActivity.labels == null){
+                out.write("REQUEST LABELS".getBytes(Charset.forName("UTF-8")));
+                mainActivity.labels = waitForMessage();
+            }
 
             out.write("REQUEST DATA".getBytes(Charset.forName("UTF-8")));
 
@@ -56,9 +64,7 @@ public class PullDataThread extends Thread{
             if(amount>0)  bytes = Arrays.copyOfRange(bytes, 0, amount);//puts data into bytes and cuts bytes
             else continue;
 
-            String message = new String(bytes, Charset.forName("UTF-8"));
-
-            return message;
+            return new String(bytes, Charset.forName("UTF-8"));
         }
 
         return null;

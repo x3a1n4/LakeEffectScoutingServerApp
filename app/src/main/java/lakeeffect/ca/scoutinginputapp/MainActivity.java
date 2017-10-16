@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 if(pullDataThread == null || !pullDataThread.running) {
-                    pullDataThread = new PullDataThread(bluetoothSocket);
+                    pullDataThread = new PullDataThread(bluetoothSocket, MainActivity.this);
                     pullDataThread.start();
 
                 }else{
