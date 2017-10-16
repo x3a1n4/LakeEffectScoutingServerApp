@@ -38,11 +38,10 @@ public class MainActivity extends AppCompatActivity {
     int connectedDevices = 1;
     Thread thread;
 
-    BluetoothSocket bluetoothsocket;
+    BluetoothSocket bluetoothSocket;
+    BluetoothAdapter bluetoothAdapter;
     OutputStream out;
     InputStream in;
-
-    boolean searchopen;
 
     ArrayList<String> deviceNames = new ArrayList<>();
 
@@ -55,82 +54,9 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
         startActivityForResult(intent, 3);
 
-        final BluetoothAdapter ba = BluetoothAdapter.getDefaultAdapter();
+        bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         startActivityForResult(turnOn, 0);
-
-                Button check = ((Button) findViewById(R.id.search));
-                final EditText robotNum = ((EditText) findViewById(R.id.robotnum));
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                Toast.makeText(MainActivity.this, String.valueOf(robotNum==null),
-                        Toast.LENGTH_LONG).show();
-            }
-        });
-        assert check != null;
-        check.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                File sdcard = Environment.getExternalStorageDirectory();
-                File file = new File(sdcard.getPath() + "/#ScoutingData/" + robotNum.getText() +  ".csv");
-                StringBuilder text = new StringBuilder();
-                if (!file.exists()) {
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                                Toast.makeText(MainActivity.this, "File does not exist yet",
-                                    Toast.LENGTH_LONG).show();
-                        }
-                    });
-
-                    return;
-                }
-
-                try {
-                    BufferedReader br = new BufferedReader(new FileReader(file));
-                    String line;
-
-                    int i = 0;
-
-                    while ((line = br.readLine()) != null) {
-                        if(i==0 ){
-                            i+=1;
-                            continue;
-                        }
-                        text.append(line);
-                        text.append("\n");
-                    }
-                    br.close();
-                }catch (IOException e) {
-                    e.printStackTrace();
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(MainActivity.this, "ERROR IOEXCEPTION!",
-                                    Toast.LENGTH_LONG).show();
-                        }
-                    });
-
-                }
-                final String[] data = text.toString().split("end");
-
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        setContentView(R.layout.search_robots);
-                        searchopen = true;
-                        for(int i=0;i<data.length;i++){
-                            final String parsedData = parse(data[i]);
-                            RelativeLayout layout = ((RelativeLayout) getLayoutInflater().inflate(R.layout.search_robots, null));
-                            TextView textview = new TextView(MainActivity.this);
-                            textview.setText(parsedData);
-                            layout.addView(textview);
-                        }
-                    }
-                });
-            }
-        });
 
         Button connect = ((Button) findViewById(R.id.connect));
         assert(connect != null);
@@ -140,21 +66,23 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 while(true) {
                     try {
-                        final BluetoothServerSocket bss = ba.listenUsingRfcommWithServiceRecord("SteamworksScoutingApp", UUID.fromString("6ba6afdc-6a0a-4b1d-a2bf-f71ac108b636"));
-                        bluetoothsocket = bss.accept();
+                        final BluetoothServerSocket bss = bluetoothAdapter.listenUsingRfcommWithServiceRecord("SteamworksScoutingApp", UUID.fromString("6ba6afdc-6a0a-4b1d-a2bf-f71ac108b636"));
+                        bluetoothSocket = bss.accept();
                         System.out.println("accepted");
-                        out = bluetoothsocket.getOutputStream();
-                        in = bluetoothsocket.getInputStream();
+                        out = bluetoothSocket.getOutputStream();
+                        in = bluetoothSocket.getInputStream();
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    if (bluetoothsocket.isConnected()) {
-                        new BluetoothConnection(bluetoothsocket, out, in, MainActivity.this).start();
+                    if (bluetoothSocket.isConnected()) {
+                        new BluetoothConnection(bluetoothSocket, out, in, MainActivity.this).start();
                     }
                 }
             }
         };
         bluetooth.start();
+
+        openPullDataDialog();
 
 //        connect.setOnClickListener(new View.OnClickListener(){
 //            @Override
@@ -174,15 +102,15 @@ public class MainActivity extends AppCompatActivity {
 //////                                    dialog.dismiss();
 //////                                    thread = new Thread(){
 //////                                        public void run(){
-//////                                            BluetoothSocket bluetoothsocket = null;
+//////                                            BluetoothSocket bluetoothSocket = null;
 //////                                            OutputStream out = null;
 //////                                            InputStream in = null;
 //////                                            try {
 //////
-//////                                                bluetoothsocket = devices[which].createRfcommSocketToServiceRecord(UUID.fromString("6ba6afdc-6a0a-4b1d-a2bf-f71ac108b636"));
-//////                                                bluetoothsocket.connect();
-//////                                                out = bluetoothsocket.getOutputStream();
-//////                                                in = bluetoothsocket.getInputStream();
+//////                                                bluetoothSocket = devices[which].createRfcommSocketToServiceRecord(UUID.fromString("6ba6afdc-6a0a-4b1d-a2bf-f71ac108b636"));
+//////                                                bluetoothSocket.connect();
+//////                                                out = bluetoothSocket.getOutputStream();
+//////                                                in = bluetoothSocket.getInputStream();
 //////                                                //CONNECTED!!
 //////                                                runOnUiThread(new Runnable() {
 //////                                                    @Override
@@ -196,7 +124,7 @@ public class MainActivity extends AppCompatActivity {
 //////                                            }
 //////                                            String data = "";
 //////                                            Log.d("HELLO", "KJLDJJLADS");
-//////                                            while(out != null && in != null && bluetoothsocket.isConnected()){
+//////                                            while(out != null && in != null && bluetoothSocket.isConnected()){
 //////                                                Log.d("HELLO", "");
 //////                                                try {
 //////
@@ -261,12 +189,37 @@ public class MainActivity extends AppCompatActivity {
 //        });
     }
 
+    /**
+     * Opens the dialog that chooses which device to pull data from
+     */
+    public void openPullDataDialog(){
+        Set<BluetoothDevice> pairedDevices = bluetoothAdapter.getBondedDevices();
+
+        final BluetoothDevice[] devices = pairedDevices.toArray(new BluetoothDevice[0]);
+
+        String[] names = new String[devices.length];
+        if (pairedDevices.size() > 0) {
+            for (int i = 0; i < devices.length; i++) {
+                names[i] = devices[i].getName();
+            }
+        }
+
+        new AlertDialog.Builder(MainActivity.this)
+        .setTitle("Which device?")
+        .setMultiChoiceItems(names, null, new DialogInterface.OnMultiChoiceClickListener(){
+
+            @Override
+            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
+
+            }
+        })
+        .create()
+        .show();
+    }
+
     @Override
     public void onBackPressed(){
-        if(searchopen){
-            setContentView(R.layout.activity_main);
-            searchopen = false;
-        }
+
     }
 
     @Override
@@ -275,7 +228,7 @@ public class MainActivity extends AppCompatActivity {
         try {
             if(in!=null) in.close();
             if(out!=null) out.close();
-            if(bluetoothsocket!=null) bluetoothsocket.close();
+            if(bluetoothSocket!=null) bluetoothSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
