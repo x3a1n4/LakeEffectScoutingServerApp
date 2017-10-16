@@ -42,8 +42,9 @@ public class PullDataThread extends Thread{
             }
 
             out.write("REQUEST DATA".getBytes(Charset.forName("UTF-8")));
-
             String message = waitForMessage();
+
+            out.write("RECEIVED".getBytes(Charset.forName("UTF-8")));
 
         } catch (IOException e) {
             e.printStackTrace();
