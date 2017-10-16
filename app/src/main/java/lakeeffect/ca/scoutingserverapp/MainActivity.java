@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> deviceNames = new ArrayList<>();
 
     Button connect;
+    TextView status;
 
     PullDataThread pullDataThread;
 
@@ -55,6 +56,7 @@ public class MainActivity extends AppCompatActivity {
                 openPullDataDialog();
             }
         });
+        status = ((TextView) findViewById(R.id.status));
     }
 
     /**

@@ -1,6 +1,7 @@
 package lakeeffect.ca.scoutingserverapp;
 
 import android.bluetooth.BluetoothSocket;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,6 +31,8 @@ public class PullDataThread extends Thread{
 
     @Override
     public void run() {
+        //set status
+        mainActivity.status.setText("Connecting to device...");
         //send pull request and wait for a response
         try {
             bluetoothSocket.connect();
@@ -37,9 +40,13 @@ public class PullDataThread extends Thread{
             out = bluetoothSocket.getOutputStream();
 
             if(mainActivity.labels == null){
+                mainActivity.status.setText("Connected! Requesting Labels...");
+
                 out.write("REQUEST LABELS".getBytes(Charset.forName("UTF-8")));
                 mainActivity.labels = waitForMessage();
             }
+
+            mainActivity.status.setText("Connected! Requesting Data...");
 
             out.write("REQUEST DATA".getBytes(Charset.forName("UTF-8")));
             String message = waitForMessage();
@@ -50,6 +57,13 @@ public class PullDataThread extends Thread{
             e.printStackTrace();
         }
 
+        mainActivity.status.setText("All ready!");
+        //send toast of completion
+        mainActivity.runOnUiThread(new Thread(){
+            public void run(){
+                Toast.makeText(mainActivity, "Finished getting data and received X amount of data", Toast.LENGTH_LONG);
+            }
+        });
     }
 
     public String waitForMessage(){
