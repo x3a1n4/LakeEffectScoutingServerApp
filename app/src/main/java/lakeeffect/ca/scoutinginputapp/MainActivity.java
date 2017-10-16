@@ -40,14 +40,14 @@ public class MainActivity extends AppCompatActivity {
 
     BluetoothSocket bluetoothSocket;
     BluetoothAdapter bluetoothAdapter;
-    OutputStream out;
-    InputStream in;
 
     ArrayList<String> deviceNames = new ArrayList<>();
 
     Button connect;
 
     PullDataThread pullDataThread;
+
+    String labels = null; //Retreived one time per session during the first pull
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,8 +124,7 @@ public class MainActivity extends AppCompatActivity {
     public void onDestroy(){
         super.onDestroy();
         try {
-            if(in!=null) in.close();
-            if(out!=null) out.close();
+            if(pullDataThread != null) pullDataThread.onDestroy();
             if(bluetoothSocket!=null) bluetoothSocket.close();
         } catch (IOException e) {
             e.printStackTrace();
