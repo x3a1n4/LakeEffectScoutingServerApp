@@ -9,6 +9,14 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="lakeeffect.ca.scoutinginputapp.MainActivity">
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="All ready!"
+        android:id="@+id/status"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
+
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -35,11 +43,5 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Connected Devices: Not Loaded Yet (Could be not functional in code yet)"
-        android:id="@+id/connectedDevices"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true" />
+
 </RelativeLayout>
