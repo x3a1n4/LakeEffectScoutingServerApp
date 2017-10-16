@@ -24,10 +24,6 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
-    TextView connected;
-    int connectedDevices = 1;
-    Thread thread;
-
     BluetoothSocket bluetoothSocket;
     BluetoothAdapter bluetoothAdapter;
 
