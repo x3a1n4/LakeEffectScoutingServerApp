@@ -45,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<String> deviceNames = new ArrayList<>();
 
+    Button connect;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,8 +60,14 @@ public class MainActivity extends AppCompatActivity {
         Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         startActivityForResult(turnOn, 0);
 
-        Button connect = ((Button) findViewById(R.id.connect));
-        assert(connect != null);
+        connect = ((Button) findViewById(R.id.connect));
+        connect.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openPullDataDialog();
+            }
+        });
+
 //        Thread bluetooth = new BluetoothConnection();/
 
         Thread bluetooth = new Thread(){
