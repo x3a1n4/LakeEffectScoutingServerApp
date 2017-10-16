@@ -31,6 +31,8 @@ public class PullDataThread extends Thread{
 
     @Override
     public void run() {
+        running = true;
+
         //set status
         mainActivity.status.setText("Connecting to device...");
         //send pull request and wait for a response
@@ -58,12 +60,15 @@ public class PullDataThread extends Thread{
         }
 
         mainActivity.status.setText("All ready!");
+
         //send toast of completion
         mainActivity.runOnUiThread(new Thread(){
             public void run(){
                 Toast.makeText(mainActivity, "Finished getting data and received X amount of data", Toast.LENGTH_LONG);
             }
         });
+
+        running = false;
     }
 
     public String waitForMessage(){
