@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -70,7 +71,11 @@ public class MainActivity extends AppCompatActivity {
                 minVersionNum = Integer.parseInt(versionNumTextView.getText().toString());
             }
         });
-        minVersionNum = Integer.parseInt(versionNumTextView.getText().toString());
+        try {
+            minVersionNum = Integer.parseInt(versionNumTextView.getText().toString());
+        }catch (NumberFormatException e){
+            minVersionNum = 0;
+        }
     }
 
     /**
@@ -197,7 +202,9 @@ public class MainActivity extends AppCompatActivity {
 
     public void save(String data){
 
-        System.out.println(data);
+        Log.d("as", data + "  sd");
+
+        System.out.println(data + " asdasd");
 
         File sdCard = Environment.getExternalStorageDirectory();
 
