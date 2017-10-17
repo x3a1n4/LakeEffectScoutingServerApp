@@ -31,6 +31,10 @@ public class MainActivity extends AppCompatActivity {
 
     Button connect;
     TextView status;
+    TextView versionNumTextView;
+    Button versionNumButton;
+
+    int minVersionNum;
 
     PullDataThread pullDataThread;
 
@@ -56,7 +60,17 @@ public class MainActivity extends AppCompatActivity {
                 openPullDataDialog();
             }
         });
+
         status = ((TextView) findViewById(R.id.status));
+        versionNumTextView = ((TextView) findViewById(R.id.versionNum));
+        versionNumButton = ((Button) findViewById(R.id.setVersionNumber));
+        versionNumButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                minVersionNum = Integer.parseInt(versionNumTextView.getText().toString());
+            }
+        });
+        minVersionNum = Integer.parseInt(versionNumTextView.getText().toString());
     }
 
     /**

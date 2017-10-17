@@ -45,13 +45,41 @@ public class PullDataThread extends Thread{
                 mainActivity.status.setText("Connected! Requesting Labels...");
 
                 out.write("REQUEST LABELS".getBytes(Charset.forName("UTF-8")));
-                mainActivity.labels = waitForMessage();
+                String labels = waitForMessage();
+
+                int version = Integer.parseInt(labels.split(":::")[0]);
+                if(version >= mainActivity.minVersionNum){
+                    mainActivity.labels = labels.split(":::")[1];
+                }else{
+                    //send toast saying that the client has a version too old
+                    mainActivity.runOnUiThread(new Thread(){
+                        public void run(){
+                            Toast.makeText(mainActivity, "The Scouting App on the device you connected too is too old, either tell them to update or change the minimum version number", Toast.LENGTH_LONG).show();
+                        }
+                    });
+                    running = false;
+                    return;
+                }
             }
 
             mainActivity.status.setText("Connected! Requesting Data...");
 
             out.write("REQUEST DATA".getBytes(Charset.forName("UTF-8")));
             String message = waitForMessage();
+
+            int version = Integer.parseInt(message.split(":::")[0]);
+            if(version < mainActivity.minVersionNum){
+                //send toast saying that the client has a version too old
+                mainActivity.runOnUiThread(new Thread(){
+                    public void run(){
+                        Toast.makeText(mainActivity, "The Scouting App on the device you connected too is too old, either tell them to update or change the minimum version number", Toast.LENGTH_LONG).show();
+                    }
+                });
+                running = false;
+                return;
+            }else{
+
+            }
 
             out.write("RECEIVED".getBytes(Charset.forName("UTF-8")));
 
@@ -64,7 +92,7 @@ public class PullDataThread extends Thread{
         //send toast of completion
         mainActivity.runOnUiThread(new Thread(){
             public void run(){
-                Toast.makeText(mainActivity, "Finished getting data and received X amount of data", Toast.LENGTH_LONG);
+                Toast.makeText(mainActivity, "Finished getting data and received X amount of data", Toast.LENGTH_LONG).show();
             }
         });
 
