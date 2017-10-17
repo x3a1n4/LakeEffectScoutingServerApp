@@ -195,7 +195,7 @@ public class MainActivity extends AppCompatActivity {
         return "";
     }
 
-    public static void save(String data){
+    public void save(String data){
 
         System.out.println(data);
 

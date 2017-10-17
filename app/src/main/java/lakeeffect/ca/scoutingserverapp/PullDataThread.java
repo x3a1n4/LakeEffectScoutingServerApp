@@ -78,7 +78,11 @@ public class PullDataThread extends Thread{
                 running = false;
                 return;
             }else{
+                String[] data = message.split(":::")[1].split("::");
 
+                for(int i=0;i<data.length;i++){
+                    mainActivity.save(data[i]);
+                }
             }
 
             out.write("RECEIVED".getBytes(Charset.forName("UTF-8")));
