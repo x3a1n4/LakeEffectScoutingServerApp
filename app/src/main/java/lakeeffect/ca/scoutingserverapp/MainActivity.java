@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
@@ -76,13 +77,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 minVersionNum = Integer.parseInt(versionNumTextView.getText().toString());
+
+                SharedPreferences sharedPreferences = getSharedPreferences("minVersionNum", MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putInt("minVersionNum", minVersionNum);
+                editor.apply();
             }
         });
-        try {
-            minVersionNum = Integer.parseInt(versionNumTextView.getText().toString());
-        }catch (NumberFormatException e){
-            minVersionNum = 0;
-        }
+        SharedPreferences sharedPreferences = getSharedPreferences("minVersionNum", MODE_PRIVATE);
+        minVersionNum = sharedPreferences.getInt("minVersionNum", 0);
+        versionNumTextView.setText(minVersionNum + "");
 
         //load UUIDs of all data collected to make sure there are no duplicates
         ArrayList<String> data = new ArrayList<>();
