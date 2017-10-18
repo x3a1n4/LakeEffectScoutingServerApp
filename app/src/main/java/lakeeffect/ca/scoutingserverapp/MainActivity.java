@@ -148,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
 
                 runOnUiThread(new Thread(){
                     public void run(){
-                        Toast.makeText(MainActivity.this, "Added to que", Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, "Added to queue", Toast.LENGTH_LONG).show();
                     }
                 });
             }

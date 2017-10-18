@@ -90,6 +90,12 @@ public class PullDataThread extends Thread{
             out.write("REQUEST DATA".getBytes(Charset.forName("UTF-8")));
             String message = waitForMessage();
 
+            mainActivity.runOnUiThread(new Thread() {
+                public void run() {
+                    mainActivity.status.setText("Connected! Saving Data...");
+                }
+            });
+
             int version = Integer.parseInt(message.split(":::")[0]);
             if(version < mainActivity.minVersionNum){
                 //send toast saying that the client has a version too old
@@ -134,14 +140,18 @@ public class PullDataThread extends Thread{
 
 
         try {
-            in.close();
-            out.close();
-            bluetoothSocket.close();
+            onDestroy();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
         running = false;
+
+        try {
+            Thread.sleep(5000);//takes a while for bluetooth to be ready to connect again
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         mainActivity.pullDataThreads.remove(this);
         if(mainActivity.pullDataThreads.size() > 0){
