@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> deviceNames = new ArrayList<>();
 
     Button connect;
+    Button visibility;
     TextView status;
     TextView versionNumTextView;
     Button versionNumButton;
@@ -54,10 +55,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
-        intent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
-        startActivityForResult(intent, 3);
-
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         Intent turnOn = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
         startActivityForResult(turnOn, 0);
@@ -67,6 +64,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 openPullDataDialog();
+            }
+        });
+
+        visibility = ((Button) findViewById(R.id.visibility));
+        visibility.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_DISCOVERABLE);
+                intent.putExtra(BluetoothAdapter.EXTRA_DISCOVERABLE_DURATION, 0);
+                startActivityForResult(intent, 3);
             }
         });
 

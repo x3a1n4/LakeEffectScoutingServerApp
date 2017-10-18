@@ -147,12 +147,6 @@ public class PullDataThread extends Thread{
 
         running = false;
 
-        try {
-            Thread.sleep(5000);//takes a while for bluetooth to be ready to connect again
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
         mainActivity.pullDataThreads.remove(this);
         if(mainActivity.pullDataThreads.size() > 0){
             new Thread(mainActivity.pullDataThreads.get(0)).start();
