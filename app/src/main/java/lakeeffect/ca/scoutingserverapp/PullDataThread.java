@@ -93,7 +93,17 @@ public class PullDataThread extends Thread{
                 String[] data = message.split(":::")[1].split("::");
 
                 for(int i=0;i<data.length;i++){
+                    if(mainActivity.uuids.contains(mainActivity.getUUIDFromData(data[i]))){
+                        //send toast saying that the data already exists
+                        mainActivity.runOnUiThread(new Thread(){
+                            public void run(){
+                                Toast.makeText(mainActivity, "DUPLICATE DATA DETECTED AND REMOVED", Toast.LENGTH_LONG).show();
+                            }
+                        });
+                        continue;
+                    }
                     mainActivity.save(data[i], mainActivity.labels);
+                    mainActivity.uuids.add(data[i]);
                 }
             }
 
