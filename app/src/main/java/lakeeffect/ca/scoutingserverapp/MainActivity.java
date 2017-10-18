@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //load UUIDs of all data collected to make sure there are no duplicates
-        ArrayList<String> data = null;
+        ArrayList<String> data = new ArrayList<>();
         try {
             data = readData();
         } catch (IOException e) {
@@ -257,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<String> data = new ArrayList<>();
 
         for(int i=0;i<files.length;i++){
-            BufferedReader br = new BufferedReader(new FileReader(file));
+            BufferedReader br = new BufferedReader(new FileReader(files[i]));
             String line;
 
             int lineNum = 0;
