@@ -116,6 +116,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
                 }
+            dialog.dismiss();
             }
         })
         .create()
@@ -200,7 +201,7 @@ public class MainActivity extends AppCompatActivity {
         return "";
     }
 
-    public void save(String data){
+    public void save(String data, String labels){
 
         Log.d("as", data + "  sd");
 
@@ -210,8 +211,7 @@ public class MainActivity extends AppCompatActivity {
 
         File file = new File(sdCard.getPath() + "/#ScoutingData/" + data.split(":")[0] + ".csv");
 
-        String labels = data.split(":")[1];
-        data = data.replaceFirst(data.split(":")[0] + ":" + data.split(":")[1], "");
+        data = data.replaceFirst(data.split(":")[0] + ":", "");
 
         try {
             boolean newfile = false;

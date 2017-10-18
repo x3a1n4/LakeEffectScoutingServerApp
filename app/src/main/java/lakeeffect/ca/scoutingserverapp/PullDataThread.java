@@ -93,7 +93,7 @@ public class PullDataThread extends Thread{
                 String[] data = message.split(":::")[1].split("::");
 
                 for(int i=0;i<data.length;i++){
-                    mainActivity.save(data[i]);
+                    mainActivity.save(data[i], mainActivity.labels);
                 }
             }
 
@@ -111,10 +111,20 @@ public class PullDataThread extends Thread{
             }
         });
 
+
+        try {
+            in.close();
+            out.close();
+            bluetoothSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         running = false;
     }
 
     public String waitForMessage(){
+        String finalMessage = "";
         while(out != null && in != null && bluetoothSocket.isConnected()){
             byte[] bytes = new byte[100000];
             int amount = 0;
@@ -127,7 +137,14 @@ public class PullDataThread extends Thread{
             if(amount>0)  bytes = Arrays.copyOfRange(bytes, 0, amount);//puts data into bytes and cuts bytes
             else continue;
 
-            return new String(bytes, Charset.forName("UTF-8"));
+            String message = finalMessage + new String(bytes, Charset.forName("UTF-8"));
+            if(!message.endsWith("end")){
+                finalMessage = message;
+                System.out.println(finalMessage + " message");
+                continue;
+            }
+
+            return message;
         }
 
         return null;
