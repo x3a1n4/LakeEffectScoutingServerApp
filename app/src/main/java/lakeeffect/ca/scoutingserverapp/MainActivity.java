@@ -15,10 +15,15 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
@@ -40,6 +45,8 @@ public class MainActivity extends AppCompatActivity {
     PullDataThread pullDataThread;
 
     String labels = null; //Retreived one time per session during the first pull
+
+    ArrayList<String> uuids = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +82,18 @@ public class MainActivity extends AppCompatActivity {
             minVersionNum = Integer.parseInt(versionNumTextView.getText().toString());
         }catch (NumberFormatException e){
             minVersionNum = 0;
+        }
+
+        //load UUIDs of all data collected to make sure there are no duplicates
+        ArrayList<String> data = null;
+        try {
+            data = readData();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        for(String line: data){
+            uuids.add(getUUIDFromData(line));
         }
     }
 
@@ -199,6 +218,41 @@ public class MainActivity extends AppCompatActivity {
                 return "Rough Terrain";
         }
         return "";
+    }
+
+    public String getUUIDFromData(String data){
+        String[] dataArray = data.split(",");
+        return dataArray[dataArray.length-2];
+
+    }
+
+    public ArrayList<String> readData() throws IOException {
+
+        File sdCard = Environment.getExternalStorageDirectory();
+
+        File file = new File(sdCard.getPath() + "/#ScoutingData/");
+        file.mkdirs();
+
+        File[] files = new File(sdCard.getPath() + "/#ScoutingData/").listFiles();
+        if(files == null) return new ArrayList<>(); //no files in the directory
+
+        ArrayList<String> data = new ArrayList<>();
+
+        for(int i=0;i<files.length;i++){
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+
+            int lineNum = 0;
+            while ((line = br.readLine()) != null) {
+                if(lineNum > 0) {
+                    data.add(line);
+                }
+                lineNum ++;
+            }
+            br.close();
+        }
+
+        return data;
     }
 
     public void save(String data, String labels){
