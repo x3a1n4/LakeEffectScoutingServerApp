@@ -1,5 +1,6 @@
 package lakeeffect.ca.scoutingserverapp;
 
+import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.widget.Toast;
 
@@ -8,6 +9,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.UUID;
 
 /**
  * Created by Ajay on 10/15/2017.
@@ -24,14 +26,23 @@ public class PullDataThread extends Thread{
 
     MainActivity mainActivity;
 
-    public PullDataThread(BluetoothSocket bluetoothSocket, MainActivity mainActivity){
-        this.bluetoothSocket = bluetoothSocket;
+    BluetoothDevice device;
+
+    public PullDataThread(MainActivity mainActivity, BluetoothDevice bluetoothDevice){
         this.mainActivity = mainActivity;
+        this.device = bluetoothDevice;
     }
 
     @Override
     public void run() {
         running = true;
+
+        //create device
+        try {
+            bluetoothSocket = device.createRfcommSocketToServiceRecord(UUID.fromString("6ba6afdc-6a0a-4b1d-a2bf-f71ac108b636"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         //set status
         mainActivity.runOnUiThread(new Thread() {
@@ -131,6 +142,11 @@ public class PullDataThread extends Thread{
         }
 
         running = false;
+
+        mainActivity.pullDataThreads.remove(this);
+        if(mainActivity.pullDataThreads.size() > 0){
+            new Thread(mainActivity.pullDataThreads.get(0)).start();
+        }
     }
 
     public String waitForMessage(){
@@ -163,5 +179,6 @@ public class PullDataThread extends Thread{
     public void onDestroy() throws IOException {
         if(in!=null) in.close();
         if(out!=null) out.close();
+        if(bluetoothSocket!=null) bluetoothSocket.close();
     }
 }

@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
@@ -30,7 +31,6 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
-    BluetoothSocket bluetoothSocket;
     BluetoothAdapter bluetoothAdapter;
 
     ArrayList<String> deviceNames = new ArrayList<>();
@@ -42,11 +42,11 @@ public class MainActivity extends AppCompatActivity {
 
     int minVersionNum;
 
-    PullDataThread pullDataThread;
-
     String labels = null; //Retreived one time per session during the first pull
 
     ArrayList<String> uuids = new ArrayList<>();
+
+    ArrayList<PullDataThread> pullDataThreads = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -118,25 +118,42 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-                try {
-                    bluetoothSocket = devices[which].createRfcommSocketToServiceRecord(UUID.fromString("6ba6afdc-6a0a-4b1d-a2bf-f71ac108b636"));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-                if(pullDataThread == null || !pullDataThread.running) {
-                    pullDataThread = new PullDataThread(bluetoothSocket, MainActivity.this);
-                    pullDataThread.start();
-
-                }else{
-                    runOnUiThread(new Thread(){
-                        public void run(){
-                            Toast.makeText(MainActivity.this, "Already pulling data, wait until that pull is finished!", Toast.LENGTH_LONG).show();
-                        }
-                    });
-                }
-            dialog.dismiss();
+//                if(pullDataThread == null || !pullDataThread.running) {
+//                    pullDataThread = new PullDataThread(MainActivity.this, devices[which]);
+//                    pullDataThread.start();
+//
+//                }else{
+//                    runOnUiThread(new Thread(){
+//                        public void run(){
+//                            Toast.makeText(MainActivity.this, "Already pulling data, wait until that pull is finished!", Toast.LENGTH_LONG).show();
+//                        }
+//                    });
+//                }
+//            dialog.dismiss();
             }
+        })
+        .setPositiveButton("Pull", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                SparseBooleanArray checked = ((AlertDialog) dialog).getListView().getCheckedItemPositions();
+                for (int i = 0; i < ((AlertDialog) dialog).getListView().getCount(); i++){
+                    if(checked.get(i)) {
+                        pullDataThreads.add(new PullDataThread(MainActivity.this, devices[i]));
+                        if(pullDataThreads.size() <= 1){
+                            pullDataThreads.get(0).start();
+                        }
+
+                    }
+                }
+
+                runOnUiThread(new Thread(){
+                    public void run(){
+                        Toast.makeText(MainActivity.this, "Added to que", Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+
+
         })
         .create()
         .show();
@@ -151,8 +168,9 @@ public class MainActivity extends AppCompatActivity {
     public void onDestroy(){
         super.onDestroy();
         try {
-            if(pullDataThread != null) pullDataThread.onDestroy();
-            if(bluetoothSocket!=null) bluetoothSocket.close();
+            for(PullDataThread pullDataThread: pullDataThreads){
+                if(pullDataThread != null) pullDataThread.onDestroy();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
