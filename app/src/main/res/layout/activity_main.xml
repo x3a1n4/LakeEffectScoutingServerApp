@@ -7,14 +7,30 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="lakeeffect.ca.scoutinginputapp.MainActivity">
+    tools:context="lakeeffect.ca.scoutingserverapp.MainActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="All ready!"
+        android:id="@+id/status"
+        android:layout_alignParentTop="true"
+        android:layout_centerHorizontal="true" />
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Connect New Device"
+        android:text="Pull Data From Device"
         android:id="@+id/connect"
         android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enable visibility"
+        android:id="@+id/visibility"
+        android:layout_above="@+id/connect"
         android:layout_centerHorizontal="true" />
 
     <EditText
@@ -22,24 +38,18 @@
         android:layout_height="wrap_content"
         android:inputType="number"
         android:ems="10"
-        android:id="@+id/robotnum"
-        android:layout_above="@+id/search"
+        android:id="@+id/versionNum"
+        android:layout_above="@+id/setVersionNumber"
         android:layout_centerHorizontal="true" />
 
     <Button
         style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Search For Robot Data"
-        android:id="@+id/search"
+        android:text="Set Version Number"
+        android:id="@+id/setVersionNumber"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true" />
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Connected Devices: Not Loaded Yet (Could be not functional in code yet)"
-        android:id="@+id/connectedDevices"
-        android:layout_alignParentTop="true"
-        android:layout_centerHorizontal="true" />
+
 </RelativeLayout>

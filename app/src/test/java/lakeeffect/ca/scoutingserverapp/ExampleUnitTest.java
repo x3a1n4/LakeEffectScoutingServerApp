@@ -1,4 +1,4 @@
-package lakeeffect.ca.scoutinginputapp;
+package lakeeffect.ca.scoutingserverapp;
 
 import org.junit.Test;
 
