@@ -92,36 +92,45 @@ public class PullDataThread extends Thread{
 
             mainActivity.runOnUiThread(new Thread() {
                 public void run() {
-                    mainActivity.status.setText("Connected! Saving Data...");
+                mainActivity.status.setText("Connected! Saving Data...");
+            }
+        });
+
+        int version = Integer.parseInt(message.split(":::")[0]);
+        if(version < mainActivity.minVersionNum){
+            //send toast saying that the client has a version too old
+            mainActivity.runOnUiThread(new Thread(){
+                public void run(){
+                    Toast.makeText(mainActivity, "The Scouting App on the device you connected too is too old, either tell them to update or change the minimum version number", Toast.LENGTH_LONG).show();
                 }
             });
-
-            int version = Integer.parseInt(message.split(":::")[0]);
-            if(version < mainActivity.minVersionNum){
-                //send toast saying that the client has a version too old
-                mainActivity.runOnUiThread(new Thread(){
-                    public void run(){
-                        Toast.makeText(mainActivity, "The Scouting App on the device you connected too is too old, either tell them to update or change the minimum version number", Toast.LENGTH_LONG).show();
-                    }
-                });
                 running = false;
                 return;
             }else{
                 String[] data = message.split(":::")[1].split("::");
 
-                for(int i=0;i<data.length;i++){
-                    if(mainActivity.uuids.contains(mainActivity.getUUIDFromData(data[i]))){
-                        //send toast saying that the data already exists
-                        mainActivity.runOnUiThread(new Thread(){
-                            public void run(){
-                                Toast.makeText(mainActivity, "DUPLICATE DATA DETECTED AND REMOVED", Toast.LENGTH_LONG).show();
-                            }
-                        });
-                        continue;
+                if(data[0].equals("nodata")){
+                    mainActivity.runOnUiThread(new Thread() {
+                        public void run() {
+                            mainActivity.status.setText("Connected! They have no data to send...");
+                        }
+                    });
+                }else{
+                    for(int i=0;i<data.length;i++){
+                        if(mainActivity.uuids.contains(mainActivity.getUUIDFromData(data[i]))){
+                            //send toast saying that the data already exists
+                            mainActivity.runOnUiThread(new Thread(){
+                                public void run(){
+                                    Toast.makeText(mainActivity, "Duplicate data detected and removed", Toast.LENGTH_LONG).show();
+                                }
+                            });
+                            continue;
+                        }
+                        mainActivity.save(data[i], mainActivity.labels);
+                        mainActivity.uuids.add(data[i]);
                     }
-                    mainActivity.save(data[i], mainActivity.labels);
-                    mainActivity.uuids.add(data[i]);
                 }
+
             }
 
             out.write("RECEIVED".getBytes(Charset.forName("UTF-8")));
