@@ -284,17 +284,47 @@ public class MainActivity extends AppCompatActivity {
         return data;
     }
 
+    public void saveEvents(String data) {
+        File sdCard = Environment.getExternalStorageDirectory();
+
+        File file = new File(sdCard.getPath() + "/#ScoutingData/EventData/" + data.split(":")[0] + ".csv");
+
+        data = data.replaceFirst(data.split(":")[0] + ":" + data.split(":")[1] + ":", "");
+
+        try {
+            boolean newfile = false;
+            file.getParentFile().mkdirs();
+            if (!file.exists()) {
+                file.createNewFile();
+                newfile = true;
+            }
+
+            FileOutputStream f = new FileOutputStream(file, true);
+
+            OutputStreamWriter out = new OutputStreamWriter(f);
+
+            if(newfile) out.write(labels);
+            out.write(data);
+
+            out.close();
+            f.close();
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+
+    }
+
     public void save(String data, String labels){
 
-        Log.d("as", data + "  sd");
-
-        System.out.println(data + " asdasd");
+        saveEvents(data);
 
         File sdCard = Environment.getExternalStorageDirectory();
 
         File file = new File(sdCard.getPath() + "/#ScoutingData/" + data.split(":")[0] + ".csv");
 
         data = data.replaceFirst(data.split(":")[0] + ":", "");
+
+        data = data.replaceFirst(data.split(":")[1] + ":", "");
 
         try {
             boolean newfile = false;

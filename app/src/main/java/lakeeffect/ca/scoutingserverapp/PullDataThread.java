@@ -94,18 +94,18 @@ public class PullDataThread extends Thread{
                 public void run() {
                 mainActivity.status.setText("Connected! Saving Data...");
             }
-        });
-
-        int version = Integer.parseInt(message.split(":::")[0]);
-        if(version < mainActivity.minVersionNum){
-            //send toast saying that the client has a version too old
-            mainActivity.runOnUiThread(new Thread(){
-                public void run(){
-                    Toast.makeText(mainActivity, "The Scouting App on the device you connected too is too old, either tell them to update or change the minimum version number", Toast.LENGTH_LONG).show();
-                }
             });
-                running = false;
-                return;
+
+            int version = Integer.parseInt(message.split(":::")[0]);
+            if(version < mainActivity.minVersionNum){
+                //send toast saying that the client has a version too old
+                mainActivity.runOnUiThread(new Thread(){
+                    public void run(){
+                        Toast.makeText(mainActivity, "The Scouting App on the device you connected too is too old, either tell them to update or change the minimum version number", Toast.LENGTH_LONG).show();
+                    }
+                });
+                    running = false;
+                    return;
             }else{
                 String[] data = message.split(":::")[1].split("::");
 
