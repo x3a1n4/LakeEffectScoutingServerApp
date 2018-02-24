@@ -325,6 +325,8 @@ public class MainActivity extends AppCompatActivity {
 
         data = data.replace(":" + data.split(":")[1], "");
 
+        data = data.replaceFirst(data.split(":")[1] + ":", "");
+
         try {
             boolean newfile = false;
             file.getParentFile().mkdirs();
