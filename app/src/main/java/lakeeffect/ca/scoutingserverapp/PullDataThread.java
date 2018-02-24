@@ -177,7 +177,7 @@ public class PullDataThread extends Thread{
             else continue;
 
             String message = finalMessage + new String(bytes, Charset.forName("UTF-8"));
-            if(!message.endsWith("end")){
+            if(!message.endsWith("\n")){
                 finalMessage = message;
                 System.out.println(finalMessage + " message");
                 continue;

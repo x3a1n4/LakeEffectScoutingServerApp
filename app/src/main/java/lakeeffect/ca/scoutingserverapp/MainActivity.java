@@ -289,7 +289,7 @@ public class MainActivity extends AppCompatActivity {
 
         File file = new File(sdCard.getPath() + "/#ScoutingData/EventData/" + data.split(":")[0] + ".csv");
 
-        data = data.replaceFirst(data.split(":")[0] + ":" + data.split(":")[1] + ":", "");
+        data = data.replace(data.split(":")[0] + ":" + data.split(":")[1] + ":", "");
 
         try {
             boolean newfile = false;
@@ -303,7 +303,6 @@ public class MainActivity extends AppCompatActivity {
 
             OutputStreamWriter out = new OutputStreamWriter(f);
 
-            if(newfile) out.write(labels);
             out.write(data);
 
             out.close();
@@ -322,9 +321,9 @@ public class MainActivity extends AppCompatActivity {
 
         File file = new File(sdCard.getPath() + "/#ScoutingData/" + data.split(":")[0] + ".csv");
 
-        data = data.replaceFirst(data.split(":")[0] + ":", "");
+        data = data.replace(data.split(":")[0] + ":", "");
 
-        data = data.replaceFirst(data.split(":")[1] + ":", "");
+        data = data.replace(":" + data.split(":")[1], "");
 
         try {
             boolean newfile = false;
