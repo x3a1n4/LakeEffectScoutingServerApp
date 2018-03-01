@@ -90,6 +90,8 @@ public class PullDataThread extends Thread{
             out.write("REQUEST DATA".getBytes(Charset.forName("UTF-8")));
             String message = waitForMessage();
 
+            message = message.substring(0, message.length() - 2);
+
             mainActivity.runOnUiThread(new Thread() {
                 public void run() {
                 mainActivity.status.setText("Connected! Saving Data...");
