@@ -285,6 +285,12 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void saveEvents(String data) {
+
+        if(data.split(":").length < 2){
+            //there are no events
+            return;
+        }
+
         File sdCard = Environment.getExternalStorageDirectory();
 
         File file = new File(sdCard.getPath() + "/#ScoutingData/EventData/" + data.split(":")[0] + ".csv");
@@ -323,7 +329,10 @@ public class MainActivity extends AppCompatActivity {
 
         data = data.replace(data.split(":")[0] + ":", "");
 
-        data = data.replace(":" + data.split(":")[1], "");
+        if(data.split(":").length >= 2){
+            //there are events
+            data = data.replace(":" + data.split(":")[1], "");
+        }
 
         data = data.replaceFirst(data.split(":")[1] + ":", "");
 
