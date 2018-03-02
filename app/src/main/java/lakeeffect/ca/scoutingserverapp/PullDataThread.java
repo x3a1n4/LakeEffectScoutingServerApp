@@ -118,7 +118,7 @@ public class PullDataThread extends Thread{
                         }
                     });
                 }else{
-                    for(int i=0;i<data.length;i++){
+                    for(int i = 0; i < data.length; i++){
                         if(mainActivity.uuids.contains(mainActivity.getUUIDFromData(data[i]))){
                             //send toast saying that the data already exists
                             mainActivity.runOnUiThread(new Thread(){
