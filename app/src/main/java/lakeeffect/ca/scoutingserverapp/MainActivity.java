@@ -249,8 +249,16 @@ public class MainActivity extends AppCompatActivity {
         return "";
     }
 
-    public String getUUIDFromData(String data){
+    public String getUUIDFromData(final String data){
         String[] dataArray = data.split(",");
+        if(dataArray.length <= 2){
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "Your data is b roken, the amount of commas is too small in " + data, Toast.LENGTH_LONG).show();
+                }
+            });
+        }
         return dataArray[dataArray.length-2];
 
     }
