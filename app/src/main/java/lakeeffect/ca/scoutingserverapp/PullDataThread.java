@@ -47,7 +47,7 @@ public class PullDataThread extends Thread{
         //set status
         mainActivity.runOnUiThread(new Thread() {
             public void run() {
-                mainActivity.status.setText("Connecting to device...");
+                mainActivity.status.setText("Connecting to " + device.getName() + "...");
             }
         });
         //send pull request and wait for a response
@@ -59,7 +59,7 @@ public class PullDataThread extends Thread{
             if(mainActivity.labels == null){
                 mainActivity.runOnUiThread(new Thread() {
                    public void run() {
-                       mainActivity.status.setText("Connected! Requesting Labels...");
+                       mainActivity.status.setText("Connected! Requesting Labels from " + device.getName() + "...");
                    }
                });
 
@@ -83,7 +83,7 @@ public class PullDataThread extends Thread{
 
             mainActivity.runOnUiThread(new Thread() {
                 public void run() {
-                    mainActivity.status.setText("Connected! Requesting Data...");
+                    mainActivity.status.setText("Connected! Requesting Data from " + device.getName() + "...");
                 }
             });
 
@@ -94,7 +94,7 @@ public class PullDataThread extends Thread{
 
             mainActivity.runOnUiThread(new Thread() {
                 public void run() {
-                mainActivity.status.setText("Connected! Saving Data...");
+                mainActivity.status.setText("Connected! Saving Data from " + device.getName() + "...");
             }
             });
 
@@ -114,7 +114,7 @@ public class PullDataThread extends Thread{
                 if(data[0].equals("nodata")){
                     mainActivity.runOnUiThread(new Thread() {
                         public void run() {
-                            mainActivity.status.setText("Connected! They have no data to send...");
+                            mainActivity.status.setText("Connected! " + device.getName() + " have no data to send...");
                         }
                     });
                 }else{
