@@ -258,6 +258,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "Your data is b roken, the amount of commas is too small in " + data, Toast.LENGTH_LONG).show();
                 }
             });
+            return "null";
         }
         return dataArray[dataArray.length-2];
 
