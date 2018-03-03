@@ -268,6 +268,8 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<String> data = new ArrayList<>();
 
         for(int i=0;i<files.length;i++){
+            if(files[i].isDirectory()) continue;
+
             BufferedReader br = new BufferedReader(new FileReader(files[i]));
             String line;
 
@@ -309,7 +311,7 @@ public class MainActivity extends AppCompatActivity {
 
             OutputStreamWriter out = new OutputStreamWriter(f);
 
-            out.write(data);
+            out.write(data + "\n");
 
             out.close();
             f.close();
@@ -334,7 +336,7 @@ public class MainActivity extends AppCompatActivity {
             data = data.replace(":" + data.split(":")[1], "");
         }
 
-        data = data.replaceFirst(data.split(":")[1] + ":", "");
+        System.out.println(data);
 
         try {
             boolean newfile = false;
