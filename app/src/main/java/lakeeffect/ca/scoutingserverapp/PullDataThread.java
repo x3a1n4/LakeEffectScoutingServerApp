@@ -90,7 +90,7 @@ public class PullDataThread extends Thread{
             out.write("REQUEST DATA".getBytes(Charset.forName("UTF-8")));
             String message = waitForMessage();
 
-            message = message.substring(0, message.length() - 2);
+            message = message.substring(0, message.length() - 1);
 
             mainActivity.runOnUiThread(new Thread() {
                 public void run() {
