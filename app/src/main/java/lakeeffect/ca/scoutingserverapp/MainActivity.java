@@ -255,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getApplicationContext(), "Your data is b roken, the amount of commas is too small in " + data, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Your data is broken, the amount of commas is too small in " + data, Toast.LENGTH_LONG).show();
                 }
             });
             return "null";
@@ -307,6 +307,14 @@ public class MainActivity extends AppCompatActivity {
         File file = new File(sdCard.getPath() + "/#ScoutingData/EventData/" + data.split(":")[0] + ".csv");
 
         data = data.replace(data.split(":")[0] + ":" + data.split(":")[1] + ":", "");
+
+        if (data.equals("") || data.equals("\n")) {
+            return;
+        }
+
+        if (data.endsWith("\n")) {
+            data = data.substring(0, data.length() - 1);
+        }
 
         try {
             boolean newfile = false;
