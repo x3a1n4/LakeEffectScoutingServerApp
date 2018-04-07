@@ -95,7 +95,7 @@ public class PullDataThread extends Thread{
             mainActivity.runOnUiThread(new Thread() {
                 public void run() {
                 mainActivity.status.setText("Connected! Saving Data from " + device.getName() + "...");
-            }
+                }
             });
 
             int version = Integer.parseInt(message.split(":::")[0]);
@@ -114,7 +114,7 @@ public class PullDataThread extends Thread{
                 if(data[0].equals("nodata")){
                     mainActivity.runOnUiThread(new Thread() {
                         public void run() {
-                            mainActivity.status.setText("Connected! " + device.getName() + " have no data to send...");
+                            mainActivity.status.setText("Connected! " + device.getName() + " has no data to send...");
                         }
                     });
                 }else{
