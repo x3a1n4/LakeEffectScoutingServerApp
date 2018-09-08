@@ -3,7 +3,6 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/LakeEffectScoutingServerApp.iml" filepath="$PROJECT_DIR$/LakeEffectScoutingServerApp.iml" />
-      <module fileurl="file://C:\Users\Ajay\StudioProjects\LakeEffectScoutingServerApp\SteamworksServerApp.iml" filepath="C:\Users\Ajay\StudioProjects\LakeEffectScoutingServerApp\SteamworksServerApp.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
