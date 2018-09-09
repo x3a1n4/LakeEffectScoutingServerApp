@@ -20,8 +20,9 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Pull Data From Device"
+        android:text="Add active device"
         android:id="@+id/connect"
+        android:layout_below="@+id/visibility"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />
 
@@ -30,7 +31,33 @@
         android:layout_height="wrap_content"
         android:text="Enable visibility"
         android:id="@+id/visibility"
-        android:layout_above="@+id/connect"
+        android:layout_below="@+id/status"
+        android:layout_centerHorizontal="true" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/devicesMenu"
+        android:layout_below="@+id/connect"
+        android:layout_above="@+id/pullAll">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:id="@+id/devicesMenuLinearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pull All"
+        android:id="@+id/pullAll"
+        android:layout_above="@+id/versionNum"
+        android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />
 
     <EditText

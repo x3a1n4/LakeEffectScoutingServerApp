@@ -9,11 +9,15 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
+import android.support.v4.view.ScrollingView;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.util.SparseBooleanArray;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -49,6 +53,8 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> uuids = new ArrayList<>();
 
     ArrayList<PullDataThread> pullDataThreads = new ArrayList<>();
+
+    ArrayList<BluetoothDevice> devicesSelected = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -124,42 +130,21 @@ public class MainActivity extends AppCompatActivity {
         }
 
         new AlertDialog.Builder(MainActivity.this)
-        .setTitle("Which device?")
-        .setMultiChoiceItems(names, null, new DialogInterface.OnMultiChoiceClickListener(){
-
-            @Override
-            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-//                if(pullDataThread == null || !pullDataThread.running) {
-//                    pullDataThread = new PullDataThread(MainActivity.this, devices[which]);
-//                    pullDataThread.start();
-//
-//                }else{
-//                    runOnUiThread(new Thread(){
-//                        public void run(){
-//                            Toast.makeText(MainActivity.this, "Already pulling data, wait until that pull is finished!", Toast.LENGTH_LONG).show();
-//                        }
-//                    });
-//                }
-//            dialog.dismiss();
-            }
-        })
-        .setPositiveButton("Pull", new DialogInterface.OnClickListener() {
+        .setTitle("Which device would you like to add?")
+        .setMultiChoiceItems(names, null, null)
+        .setPositiveButton("Add Devices", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 SparseBooleanArray checked = ((AlertDialog) dialog).getListView().getCheckedItemPositions();
-                for (int i = 0; i < ((AlertDialog) dialog).getListView().getCount(); i++){
+                for (int i = 0; i < ((AlertDialog) dialog).getListView().getCount(); i++) {
                     if(checked.get(i)) {
-                        pullDataThreads.add(new PullDataThread(MainActivity.this, devices[i]));
-                        if(pullDataThreads.size() <= 1){
-                            pullDataThreads.get(0).start();
-                        }
-
+                        addSelectedDevice(devices[i]);
                     }
                 }
 
                 runOnUiThread(new Thread(){
                     public void run(){
-                        Toast.makeText(MainActivity.this, "Added to queue", Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, "Added to list", Toast.LENGTH_LONG).show();
                     }
                 });
             }
@@ -168,6 +153,51 @@ public class MainActivity extends AppCompatActivity {
         })
         .create()
         .show();
+    }
+
+    //Add one device to the selected device list
+    public void addSelectedDevice(final BluetoothDevice device) {
+        devicesSelected.add(device);
+
+        final LinearLayout linearLayout = (LinearLayout) findViewById(R.id.devicesMenuLinearLayout);
+
+        final View newDeviceMenu = LayoutInflater.from(this).inflate(R.layout.device_name, null);
+
+        //set onClick listeners
+        newDeviceMenu.findViewById(R.id.pull).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pullFromDevice(device);
+            }
+        });
+        newDeviceMenu.findViewById(R.id.remove).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                linearLayout.removeView(newDeviceMenu);
+
+                devicesSelected.remove(device);
+
+                runOnUiThread(new Thread(){
+                    public void run(){
+                        Toast.makeText(MainActivity.this, "Removed " + device.getName(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+
+        //set text
+        ((TextView) newDeviceMenu.findViewById(R.id.deviceName)).setText(device.getName() + " (Never pulled)");
+
+        linearLayout.addView(newDeviceMenu);
+    }
+
+    //Pull data from the specified device and send data about schedule
+    public void pullFromDevice(BluetoothDevice device) {
+        pullDataThreads.add(new PullDataThread(MainActivity.this, device));
+
+        if(pullDataThreads.size() <= 1) {
+            pullDataThreads.get(0).start();
+        }
     }
 
     @Override
@@ -223,7 +253,7 @@ public class MainActivity extends AppCompatActivity {
         message += "High Goals: " + data[data.length-2] + " attemps and " + data[data.length-1] + " goals scored";
 
             return message;
-        }
+    }
 
     public String getDefense(int i){
         switch(i){
