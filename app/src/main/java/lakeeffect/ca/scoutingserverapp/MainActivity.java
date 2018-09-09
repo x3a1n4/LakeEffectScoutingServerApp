@@ -30,7 +30,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.lang.reflect.Array;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Set;
 import java.util.UUID;
 
@@ -167,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
         newDeviceMenu.findViewById(R.id.pull).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                pullFromDevice(device);
+                pullFromDevice(device, newDeviceMenu);
             }
         });
         newDeviceMenu.findViewById(R.id.remove).setOnClickListener(new View.OnClickListener() {
@@ -192,12 +194,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //Pull data from the specified device and send data about schedule
-    public void pullFromDevice(BluetoothDevice device) {
+    public void pullFromDevice(BluetoothDevice device, View deviceMenu) {
         pullDataThreads.add(new PullDataThread(MainActivity.this, device));
 
         if(pullDataThreads.size() <= 1) {
             pullDataThreads.get(0).start();
         }
+
+        //update last pull time
+        Calendar cal = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("h:mm");
+        System.out.println( sdf.format(cal.getTime()) );
+        ((TextView) deviceMenu.findViewById(R.id.deviceName)).setText(device.getName() + " (" + sdf.format(cal.getTime()) + ")");
     }
 
     @Override
