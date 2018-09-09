@@ -3,38 +3,30 @@ package lakeeffect.ca.scoutingserverapp;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
-import android.support.v4.view.ScrollingView;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Set;
-import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -56,7 +48,12 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<PullDataThread> pullDataThreads = new ArrayList<>();
 
+    //data for the devices added to the list
     ArrayList<BluetoothDevice> devicesSelected = new ArrayList<>();
+    ArrayList<View> devicesSelectedView = new ArrayList<>();
+
+    //The format for time when displayed
+    SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm");
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,6 +99,16 @@ public class MainActivity extends AppCompatActivity {
         SharedPreferences sharedPreferences = getSharedPreferences("minVersionNum", MODE_PRIVATE);
         minVersionNum = sharedPreferences.getInt("minVersionNum", 0);
         versionNumTextView.setText(minVersionNum + "");
+
+        //add click listener for pull all
+        findViewById(R.id.pullAll).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                for (int i = 0; i < devicesSelected.size(); i++){
+                    pullFromDevice(devicesSelected.get(i), devicesSelectedView.get(i));
+                }
+            }
+        });
 
         //load UUIDs of all data collected to make sure there are no duplicates
         ArrayList<String> data = new ArrayList<>();
@@ -165,6 +172,8 @@ public class MainActivity extends AppCompatActivity {
 
         final View newDeviceMenu = LayoutInflater.from(this).inflate(R.layout.device_name, null);
 
+        devicesSelectedView.add(newDeviceMenu);
+
         //set onClick listeners
         newDeviceMenu.findViewById(R.id.pull).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -203,9 +212,8 @@ public class MainActivity extends AppCompatActivity {
 
         //update last pull time
         Calendar cal = Calendar.getInstance();
-        SimpleDateFormat sdf = new SimpleDateFormat("h:mm");
-        System.out.println( sdf.format(cal.getTime()) );
-        ((TextView) deviceMenu.findViewById(R.id.deviceName)).setText(device.getName() + " (" + sdf.format(cal.getTime()) + ")");
+        System.out.println( timeFormat.format(cal.getTime()) );
+        ((TextView) deviceMenu.findViewById(R.id.deviceName)).setText(device.getName() + " (" + timeFormat.format(cal.getTime()) + ")");
     }
 
     @Override
