@@ -2,6 +2,8 @@ package lakeeffect.ca.scoutingserverapp;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -27,10 +29,12 @@ public class PullDataThread extends Thread{
     MainActivity mainActivity;
 
     BluetoothDevice device;
+    View deviceMenu;
 
-    public PullDataThread(MainActivity mainActivity, BluetoothDevice bluetoothDevice){
+    public PullDataThread(MainActivity mainActivity, BluetoothDevice bluetoothDevice, View deviceMenu){
         this.mainActivity = mainActivity;
         this.device = bluetoothDevice;
+        this.deviceMenu = deviceMenu;
     }
 
     @Override
@@ -50,7 +54,12 @@ public class PullDataThread extends Thread{
                 mainActivity.status.setText("Connecting to " + device.getName() + "...");
             }
         });
+
         //send pull request and wait for a response
+
+        //true if the try catch breaks
+        boolean error = false;
+
         try {
             bluetoothSocket.connect();
             in = bluetoothSocket.getInputStream();
@@ -139,16 +148,29 @@ public class PullDataThread extends Thread{
 
         } catch (IOException e) {
             e.printStackTrace();
+
+            error = true;
         }
 
         //send toast of completion
-        mainActivity.runOnUiThread(new Thread(){
-            public void run(){
-                mainActivity.status.setText("All ready!");
-                Toast.makeText(mainActivity, "Finished getting data and received X amount of data", Toast.LENGTH_LONG).show();
-            }
-        });
+        if (error) {
+            mainActivity.runOnUiThread(new Thread(){
+                public void run(){
+                    mainActivity.status.setText("All ready!");
+                    Toast.makeText(mainActivity, "Failed to connect to device", Toast.LENGTH_LONG).show();
+                }
+            });
+        } else {
+            mainActivity.runOnUiThread(new Thread(){
+                public void run(){
+                    mainActivity.status.setText("All ready!");
+                    Toast.makeText(mainActivity, "Finished getting data and received data", Toast.LENGTH_LONG).show();
+                }
+            });
 
+            //update last pull time
+            ((TextView) deviceMenu.findViewById(R.id.deviceName)).setText(device.getName() + " (" + mainActivity.timeFormat.format(mainActivity.cal.getTime()) + ")");
+        }
 
         try {
             onDestroy();

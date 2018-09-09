@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
     //The format for time when displayed
     SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm");
+    Calendar cal = Calendar.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -204,16 +205,11 @@ public class MainActivity extends AppCompatActivity {
 
     //Pull data from the specified device and send data about schedule
     public void pullFromDevice(BluetoothDevice device, View deviceMenu) {
-        pullDataThreads.add(new PullDataThread(MainActivity.this, device));
+        pullDataThreads.add(new PullDataThread(MainActivity.this, device, deviceMenu));
 
         if(pullDataThreads.size() <= 1) {
             pullDataThreads.get(0).start();
         }
-
-        //update last pull time
-        Calendar cal = Calendar.getInstance();
-        System.out.println( timeFormat.format(cal.getTime()) );
-        ((TextView) deviceMenu.findViewById(R.id.deviceName)).setText(device.getName() + " (" + timeFormat.format(cal.getTime()) + ")");
     }
 
     @Override
