@@ -31,6 +31,10 @@ public class PullDataThread extends Thread{
     BluetoothDevice device;
     View deviceMenu;
 
+    //if the pull fails, it will try until the max tries is reached
+    int tries = 0;
+    int maxTries = 5;
+
     public PullDataThread(MainActivity mainActivity, BluetoothDevice bluetoothDevice, View deviceMenu){
         this.mainActivity = mainActivity;
         this.device = bluetoothDevice;
@@ -154,17 +158,30 @@ public class PullDataThread extends Thread{
 
         //send toast of completion
         if (error) {
-            mainActivity.runOnUiThread(new Thread(){
-                public void run(){
-                    mainActivity.status.setText("All ready!");
-                    Toast.makeText(mainActivity, "Failed to connect to device", Toast.LENGTH_LONG).show();
+            mainActivity.runOnUiThread(new Thread() {
+                public void run() {
+                    mainActivity.status.setText("Pull failed, trying again...");
                 }
             });
+
+            if (tries < maxTries) {
+                tries++;
+                //try again
+                run();
+                return;
+            } else {
+                //This device is probably offline
+                mainActivity.runOnUiThread(new Thread() {
+                    public void run() {
+                        mainActivity.status.setText("All ready!");
+                        Toast.makeText(mainActivity, "Failed to connect to " + device.getName() + " after " + tries + " tries", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
         } else {
-            mainActivity.runOnUiThread(new Thread(){
-                public void run(){
+            mainActivity.runOnUiThread(new Thread() {
+                public void run() {
                     mainActivity.status.setText("All ready!");
-                    Toast.makeText(mainActivity, "Finished getting data and received data", Toast.LENGTH_LONG).show();
                 }
             });
 
