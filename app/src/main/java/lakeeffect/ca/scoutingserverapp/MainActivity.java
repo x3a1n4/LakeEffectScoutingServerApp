@@ -23,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -42,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
 
     int minVersionNum;
 
-    String labels = null; //Retreived one time per session during the first pull
+    String labels = null; //Retrieved one time per session during the first pull
 
     ArrayList<String> uuids = new ArrayList<>();
 
@@ -55,6 +56,9 @@ public class MainActivity extends AppCompatActivity {
     //The format for time when displayed
     SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm");
     Calendar cal = Calendar.getInstance();
+
+    //the robots schedules
+    ArrayList<ArrayList<Integer>> robotSchedule = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,6 +125,13 @@ public class MainActivity extends AppCompatActivity {
 
         for(String line: data){
             uuids.add(getUUIDFromData(line));
+        }
+
+        //load schedule into memory
+        try {
+            readSchedule();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -212,13 +223,52 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //reads the schedule code and will save the robot schedule for you
+    //store schedule in /#ScoutingSchedule/
+    //schedule is a csv with 6 robots on each line
+    public void readSchedule() throws IOException {
+        File sdCard = Environment.getExternalStorageDirectory();
+
+        File[] files = new File(sdCard.getPath() + "/#ScoutingSchedule/").listFiles();
+
+        //there is no schedule
+        if(files == null) {
+            Toast.makeText(this, "There is no schedule", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        for(int i = 0; i < files.length; i++) {
+            if(files[i].isDirectory()) continue;
+
+            BufferedReader br = new BufferedReader(new FileReader(files[i]));
+            String line;
+
+            int lineNum = 0;
+            while ((line = br.readLine()) != null) {
+                if(lineNum > 0) {
+                    String[] robots = line.split(",");
+
+                    ArrayList<Integer> robotNumbers = new ArrayList<>();
+
+                    for (int s = 0; s < robots.length; s++) {
+                        robotNumbers.add(Integer.parseInt(robots[i]));
+                    }
+
+                    robotSchedule.add(robotNumbers);
+                }
+                lineNum ++;
+            }
+            br.close();
+        }
+    }
+
     @Override
-    public void onBackPressed(){
+    public void onBackPressed() {
 
     }
 
     @Override
-    public void onDestroy(){
+    public void onDestroy() {
         super.onDestroy();
         try {
             for(PullDataThread pullDataThread: pullDataThreads){
@@ -313,12 +363,12 @@ public class MainActivity extends AppCompatActivity {
         File file = new File(sdCard.getPath() + "/#ScoutingData/");
         file.mkdirs();
 
-        File[] files = new File(sdCard.getPath() + "/#ScoutingData/").listFiles();
+        File[] files = file.listFiles();
         if(files == null) return new ArrayList<>(); //no files in the directory
 
         ArrayList<String> data = new ArrayList<>();
 
-        for(int i=0;i<files.length;i++){
+        for(int i = 0; i < files.length; i++) {
             if(files[i].isDirectory()) continue;
 
             BufferedReader br = new BufferedReader(new FileReader(files[i]));
