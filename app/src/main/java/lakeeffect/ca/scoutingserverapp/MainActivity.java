@@ -14,6 +14,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -61,8 +62,10 @@ public class MainActivity extends AppCompatActivity {
     //the robots schedules
     ArrayList<ArrayList<Integer>> robotSchedule = new ArrayList<>();
 
-    //list of names added
-    ArrayList<String> names = new ArrayList<>();
+    //list of allNames added
+    ArrayList<String> allNames = new ArrayList<>();
+    //the names that have been checked off
+    ArrayList<String> selectedNames = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -286,18 +289,38 @@ public class MainActivity extends AppCompatActivity {
         createdNames.setOrientation(LinearLayout.VERTICAL);
 
         //add checkbox and close button for each username
-        for (int i = 0; i < names.size(); i++) {
+        for (int i = 0; i < allNames.size(); i++) {
             final View view = View.inflate(this, R.layout.closable_checkbox, null);
-            ((CheckBox) view.findViewById(R.id.nameCheckBox)).setText(names.get(i));
 
-            final String name = names.get(i);
+            CheckBox checkBox = ((CheckBox) view.findViewById(R.id.nameCheckBox));
+
+            final String name = allNames.get(i);
+
+            checkBox.setText(name);
+
+            //set checkbox onChange listener
+            checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    if (isChecked) {
+                        if (!selectedNames.contains(name)) {
+                            selectedNames.add(name);
+                        }
+                    } else {
+                        if (selectedNames.contains(name)) {
+                            selectedNames.remove(name);
+                        }
+                    }
+                }
+            });
+
 
             //set close action
             view.findViewById(R.id.nameClose).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     createdNames.removeView(view);
-                    names.remove(name);
+                    allNames.remove(name);
                 }
             });
 
@@ -316,18 +339,37 @@ public class MainActivity extends AppCompatActivity {
                 final String name = ((EditText) addName.findViewById(R.id.nameEditText)).getText().toString();
 
                 //add it to the list
-                names.add(name);
+                allNames.add(name);
 
                 //add it to the UI
                 final View view = View.inflate(MainActivity.this, R.layout.closable_checkbox, null);
-                ((CheckBox) view.findViewById(R.id.nameCheckBox)).setText(name);
+
+                CheckBox checkBox = ((CheckBox) view.findViewById(R.id.nameCheckBox));
+
+                checkBox.setText(name);
+
+                //set checkbox onChange listener
+                checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        if (isChecked) {
+                            if (!selectedNames.contains(name)) {
+                                selectedNames.add(name);
+                            }
+                        } else {
+                            if (selectedNames.contains(name)) {
+                                selectedNames.remove(name);
+                            }
+                        }
+                    }
+                });
 
                 //set close action
                 view.findViewById(R.id.nameClose).setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
                         createdNames.removeView(view);
-                        names.remove(name);
+                        allNames.remove(name);
                     }
                 });
 
