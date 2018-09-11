@@ -13,6 +13,8 @@ import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -23,7 +25,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -59,6 +60,9 @@ public class MainActivity extends AppCompatActivity {
 
     //the robots schedules
     ArrayList<ArrayList<Integer>> robotSchedule = new ArrayList<>();
+
+    //list of names added
+    ArrayList<String> names = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,6 +116,14 @@ public class MainActivity extends AppCompatActivity {
                 for (int i = 0; i < devicesSelected.size(); i++){
                     pullFromDevice(devicesSelected.get(i), devicesSelectedView.get(i));
                 }
+            }
+        });
+
+        //add click listener for add user
+        findViewById(R.id.addUser).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openNameEditor();
             }
         });
 
@@ -260,6 +272,77 @@ public class MainActivity extends AppCompatActivity {
             }
             br.close();
         }
+    }
+
+    //dialog box that lets you edit and deselect names
+    public void openNameEditor() {
+
+        //contains all the names plus the view to add more
+        final LinearLayout fullView = new LinearLayout(this);
+        fullView.setOrientation(LinearLayout.VERTICAL);
+
+        //all the names already in the list
+        final LinearLayout createdNames = new LinearLayout(this);
+        createdNames.setOrientation(LinearLayout.VERTICAL);
+
+        //add checkbox and close button for each username
+        for (int i = 0; i < names.size(); i++) {
+            final View view = View.inflate(this, R.layout.closable_checkbox, null);
+            ((CheckBox) view.findViewById(R.id.nameCheckBox)).setText(names.get(i));
+
+            final String name = names.get(i);
+
+            //set close action
+            view.findViewById(R.id.nameClose).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    createdNames.removeView(view);
+                    names.remove(name);
+                }
+            });
+
+            createdNames.addView(view);
+        }
+
+        fullView.addView(createdNames);
+
+        //create view to add a new name
+        final View addName = View.inflate(this, R.layout.name_submitter, null);
+
+        //set add name action
+        addName.findViewById(R.id.nameAddButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                final String name = ((EditText) addName.findViewById(R.id.nameEditText)).getText().toString();
+
+                //add it to the list
+                names.add(name);
+
+                //add it to the UI
+                final View view = View.inflate(MainActivity.this, R.layout.closable_checkbox, null);
+                ((CheckBox) view.findViewById(R.id.nameCheckBox)).setText(name);
+
+                //set close action
+                view.findViewById(R.id.nameClose).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        createdNames.removeView(view);
+                        names.remove(name);
+                    }
+                });
+
+                createdNames.addView(view);
+            }
+        });
+
+        fullView.addView(addName);
+
+        //create the dialog box
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Select Names")
+                .setView(fullView)
+                .setPositiveButton("Ok", null)
+                .show();
     }
 
     @Override

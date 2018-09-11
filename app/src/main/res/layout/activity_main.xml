@@ -20,6 +20,14 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:text="Enable visibility"
+        android:id="@+id/visibility"
+        android:layout_below="@+id/status"
+        android:layout_centerHorizontal="true" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:text="Add active device"
         android:id="@+id/connect"
         android:layout_below="@+id/visibility"
@@ -29,16 +37,17 @@
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Enable visibility"
-        android:id="@+id/visibility"
-        android:layout_below="@+id/status"
+        android:text="Add user"
+        android:id="@+id/addUser"
+        android:layout_below="@+id/connect"
+        android:layout_centerVertical="true"
         android:layout_centerHorizontal="true" />
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/devicesMenu"
-        android:layout_below="@+id/connect"
+        android:layout_below="@+id/addUser"
         android:layout_above="@+id/pullAll">
 
         <LinearLayout
