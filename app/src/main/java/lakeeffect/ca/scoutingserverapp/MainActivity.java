@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Set;
 
@@ -147,6 +148,17 @@ public class MainActivity extends AppCompatActivity {
             readSchedule();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+
+        //load names
+        SharedPreferences namesPreferences = getSharedPreferences("names", MODE_PRIVATE);
+        String allNamesText = namesPreferences.getString("allNames", "");
+        if (!allNamesText.equals("")) {
+            allNames = new ArrayList<>(Arrays.asList(allNamesText.split(",")));
+        }
+        String selectedNamesText = namesPreferences.getString("selectedNames", "");
+        if (!selectedNamesText.equals("")) {
+            selectedNames = new ArrayList<>(Arrays.asList(selectedNamesText.split(",")));
         }
     }
 
@@ -298,10 +310,17 @@ public class MainActivity extends AppCompatActivity {
 
             checkBox.setText(name);
 
+            //if it is selected, check the box
+            if (selectedNames.contains(name)) {
+                checkBox.setChecked(true);
+            }
+
             //set checkbox onChange listener
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
+
                     if (isChecked) {
                         if (!selectedNames.contains(name)) {
                             selectedNames.add(name);
@@ -311,6 +330,19 @@ public class MainActivity extends AppCompatActivity {
                             selectedNames.remove(name);
                         }
                     }
+
+                    //get all the names in csv
+                    String names = "";
+                    for (String name : selectedNames) {
+                        names += name;
+                        if (selectedNames.indexOf(name) < selectedNames.size() - 1) {
+                            names += ",";
+                        }
+                    }
+
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString("selectedNames", names);
+                    editor.apply();
                 }
             });
 
@@ -321,6 +353,21 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     createdNames.removeView(view);
                     allNames.remove(name);
+
+                    SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
+
+                    //get all the names in csv
+                    String names = "";
+                    for (String name : allNames) {
+                        names += name;
+                        if (allNames.indexOf(name) < allNames.size() - 1) {
+                            names += ",";
+                        }
+                    }
+
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString("allNames", names);
+                    editor.apply();
                 }
             });
 
@@ -340,6 +387,8 @@ public class MainActivity extends AppCompatActivity {
 
                 //add it to the list
                 allNames.add(name);
+
+                updateAllNames();
 
                 //add it to the UI
                 final View view = View.inflate(MainActivity.this, R.layout.closable_checkbox, null);
@@ -361,6 +410,8 @@ public class MainActivity extends AppCompatActivity {
                                 selectedNames.remove(name);
                             }
                         }
+
+                        updateSelectedNames();
                     }
                 });
 
@@ -370,6 +421,8 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         createdNames.removeView(view);
                         allNames.remove(name);
+
+                        updateAllNames();
                     }
                 });
 
@@ -385,6 +438,42 @@ public class MainActivity extends AppCompatActivity {
                 .setView(fullView)
                 .setPositiveButton("Ok", null)
                 .show();
+    }
+
+    //updates the shared preferences with the all names list
+    public void updateAllNames() {
+        SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
+
+        //get all the names in csv
+        String names = "";
+        for (String name : allNames) {
+            names += name;
+            if (allNames.indexOf(name) < allNames.size() - 1) {
+                names += ",";
+            }
+        }
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("allNames", names);
+        editor.apply();
+    }
+
+    //updates the shared preferences with the selected names list
+    public void updateSelectedNames() {
+        SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
+
+        //get all the names in csv
+        String names = "";
+        for (String name : selectedNames) {
+            names += name;
+            if (selectedNames.indexOf(name) < selectedNames.size() - 1) {
+                names += ",";
+            }
+        }
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("selectedNames", names);
+        editor.apply();
     }
 
     @Override
