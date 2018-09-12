@@ -383,7 +383,12 @@ public class MainActivity extends AppCompatActivity {
         addName.findViewById(R.id.nameAddButton).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                final String name = ((EditText) addName.findViewById(R.id.nameEditText)).getText().toString();
+                EditText nameEditText = ((EditText) addName.findViewById(R.id.nameEditText));
+
+                final String name = nameEditText.getText().toString();
+
+                //reset text
+                nameEditText.setText("");
 
                 //add it to the list
                 allNames.add(name);
