@@ -150,6 +150,18 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
 
+        //load schedule when button is pressed.
+        findViewById(R.id.reloadSchedule).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    readSchedule();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         //load names
         SharedPreferences namesPreferences = getSharedPreferences("names", MODE_PRIVATE);
         String allNamesText = namesPreferences.getString("allNames", "");

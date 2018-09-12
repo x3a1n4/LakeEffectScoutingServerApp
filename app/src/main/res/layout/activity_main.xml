@@ -60,14 +60,26 @@
 
     </ScrollView>
 
-    <Button
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Pull All"
-        android:id="@+id/pullAll"
         android:layout_above="@+id/versionNum"
         android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pull All"
+            android:id="@+id/pullAll"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reload Schedule"
+            android:id="@+id/reloadSchedule"/>
+
+    </LinearLayout>
 
     <EditText
         android:layout_width="wrap_content"
