@@ -3,32 +3,34 @@ package lakeeffect.ca.scoutingserverapp;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.util.SparseBooleanArray;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Array;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Set;
-import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -44,11 +46,27 @@ public class MainActivity extends AppCompatActivity {
 
     int minVersionNum;
 
-    String labels = null; //Retreived one time per session during the first pull
+    String labels = null; //Retrieved one time per session during the first pull
 
     ArrayList<String> uuids = new ArrayList<>();
 
     ArrayList<PullDataThread> pullDataThreads = new ArrayList<>();
+
+    //data for the devices added to the list
+    ArrayList<BluetoothDevice> devicesSelected = new ArrayList<>();
+    ArrayList<View> devicesSelectedView = new ArrayList<>();
+
+    //The format for time when displayed
+    SimpleDateFormat timeFormat = new SimpleDateFormat("h:mm");
+    Calendar cal = Calendar.getInstance();
+
+    //the robots schedules
+    ArrayList<ArrayList<Integer>> robotSchedule = new ArrayList<>();
+
+    //list of allNames added
+    ArrayList<String> allNames = new ArrayList<>();
+    //the names that have been checked off
+    ArrayList<String> selectedNames = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +113,24 @@ public class MainActivity extends AppCompatActivity {
         minVersionNum = sharedPreferences.getInt("minVersionNum", 0);
         versionNumTextView.setText(minVersionNum + "");
 
+        //add click listener for pull all
+        findViewById(R.id.pullAll).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                for (int i = 0; i < devicesSelected.size(); i++){
+                    pullFromDevice(devicesSelected.get(i), devicesSelectedView.get(i));
+                }
+            }
+        });
+
+        //add click listener for add user
+        findViewById(R.id.addUser).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openNameEditor();
+            }
+        });
+
         //load UUIDs of all data collected to make sure there are no duplicates
         ArrayList<String> data = new ArrayList<>();
         try {
@@ -105,6 +141,36 @@ public class MainActivity extends AppCompatActivity {
 
         for(String line: data){
             uuids.add(getUUIDFromData(line));
+        }
+
+        //load schedule into memory
+        try {
+            readSchedule();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //load schedule when button is pressed.
+        findViewById(R.id.reloadSchedule).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    readSchedule();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //load names
+        SharedPreferences namesPreferences = getSharedPreferences("names", MODE_PRIVATE);
+        String allNamesText = namesPreferences.getString("allNames", "");
+        if (!allNamesText.equals("")) {
+            allNames = new ArrayList<>(Arrays.asList(allNamesText.split(",")));
+        }
+        String selectedNamesText = namesPreferences.getString("selectedNames", "");
+        if (!selectedNamesText.equals("")) {
+            selectedNames = new ArrayList<>(Arrays.asList(selectedNamesText.split(",")));
         }
     }
 
@@ -124,42 +190,21 @@ public class MainActivity extends AppCompatActivity {
         }
 
         new AlertDialog.Builder(MainActivity.this)
-        .setTitle("Which device?")
-        .setMultiChoiceItems(names, null, new DialogInterface.OnMultiChoiceClickListener(){
-
-            @Override
-            public void onClick(DialogInterface dialog, int which, boolean isChecked) {
-//                if(pullDataThread == null || !pullDataThread.running) {
-//                    pullDataThread = new PullDataThread(MainActivity.this, devices[which]);
-//                    pullDataThread.start();
-//
-//                }else{
-//                    runOnUiThread(new Thread(){
-//                        public void run(){
-//                            Toast.makeText(MainActivity.this, "Already pulling data, wait until that pull is finished!", Toast.LENGTH_LONG).show();
-//                        }
-//                    });
-//                }
-//            dialog.dismiss();
-            }
-        })
-        .setPositiveButton("Pull", new DialogInterface.OnClickListener() {
+        .setTitle("Which device would you like to add?")
+        .setMultiChoiceItems(names, null, null)
+        .setPositiveButton("Add Devices", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 SparseBooleanArray checked = ((AlertDialog) dialog).getListView().getCheckedItemPositions();
-                for (int i = 0; i < ((AlertDialog) dialog).getListView().getCount(); i++){
+                for (int i = 0; i < ((AlertDialog) dialog).getListView().getCount(); i++) {
                     if(checked.get(i)) {
-                        pullDataThreads.add(new PullDataThread(MainActivity.this, devices[i]));
-                        if(pullDataThreads.size() <= 1){
-                            pullDataThreads.get(0).start();
-                        }
-
+                        addSelectedDevice(devices[i]);
                     }
                 }
 
                 runOnUiThread(new Thread(){
                     public void run(){
-                        Toast.makeText(MainActivity.this, "Added to queue", Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, "Added to list", Toast.LENGTH_LONG).show();
                     }
                 });
             }
@@ -170,13 +215,291 @@ public class MainActivity extends AppCompatActivity {
         .show();
     }
 
+    //Add one device to the selected device list
+    public void addSelectedDevice(final BluetoothDevice device) {
+        devicesSelected.add(device);
+
+        final LinearLayout linearLayout = (LinearLayout) findViewById(R.id.devicesMenuLinearLayout);
+
+        final View newDeviceMenu = LayoutInflater.from(this).inflate(R.layout.device_name, null);
+
+        devicesSelectedView.add(newDeviceMenu);
+
+        //set onClick listeners
+        newDeviceMenu.findViewById(R.id.pull).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                pullFromDevice(device, newDeviceMenu);
+            }
+        });
+        newDeviceMenu.findViewById(R.id.remove).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                linearLayout.removeView(newDeviceMenu);
+
+                devicesSelected.remove(device);
+
+                runOnUiThread(new Thread(){
+                    public void run(){
+                        Toast.makeText(MainActivity.this, "Removed " + device.getName(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+
+        //set text
+        ((TextView) newDeviceMenu.findViewById(R.id.deviceName)).setText(device.getName() + " (Never pulled)");
+
+        linearLayout.addView(newDeviceMenu);
+    }
+
+    //Pull data from the specified device and send data about schedule
+    public void pullFromDevice(BluetoothDevice device, View deviceMenu) {
+        pullDataThreads.add(new PullDataThread(MainActivity.this, device, deviceMenu));
+
+        if(pullDataThreads.size() <= 1) {
+            pullDataThreads.get(0).start();
+        }
+    }
+
+    //reads the schedule code and will save the robot schedule for you
+    //store schedule in /#ScoutingSchedule/
+    //schedule is a csv with 6 robots on each line
+    public void readSchedule() throws IOException {
+        File sdCard = Environment.getExternalStorageDirectory();
+
+        File[] files = new File(sdCard.getPath() + "/#ScoutingSchedule/").listFiles();
+
+        //there is no schedule
+        if(files == null) {
+            Toast.makeText(this, "There is no schedule", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        for(int i = 0; i < files.length; i++) {
+            if(files[i].isDirectory()) continue;
+
+            BufferedReader br = new BufferedReader(new FileReader(files[i]));
+            String line;
+
+            int lineNum = 0;
+            while ((line = br.readLine()) != null) {
+                if(lineNum > 0) {
+                    String[] robots = line.split(",");
+
+                    ArrayList<Integer> robotNumbers = new ArrayList<>();
+
+                    for (int s = 0; s < robots.length; s++) {
+                        robotNumbers.add(Integer.parseInt(robots[i]));
+                    }
+
+                    robotSchedule.add(robotNumbers);
+                }
+                lineNum ++;
+            }
+            br.close();
+        }
+    }
+
+    //dialog box that lets you edit and deselect names
+    public void openNameEditor() {
+
+        //contains all the names plus the view to add more
+        final LinearLayout fullView = new LinearLayout(this);
+        fullView.setOrientation(LinearLayout.VERTICAL);
+
+        //all the names already in the list
+        final LinearLayout createdNames = new LinearLayout(this);
+        createdNames.setOrientation(LinearLayout.VERTICAL);
+
+        //add checkbox and close button for each username
+        for (int i = 0; i < allNames.size(); i++) {
+            final View view = View.inflate(this, R.layout.closable_checkbox, null);
+
+            CheckBox checkBox = ((CheckBox) view.findViewById(R.id.nameCheckBox));
+
+            final String name = allNames.get(i);
+
+            checkBox.setText(name);
+
+            //if it is selected, check the box
+            if (selectedNames.contains(name)) {
+                checkBox.setChecked(true);
+            }
+
+            //set checkbox onChange listener
+            checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
+
+                    if (isChecked) {
+                        if (!selectedNames.contains(name)) {
+                            selectedNames.add(name);
+                        }
+                    } else {
+                        if (selectedNames.contains(name)) {
+                            selectedNames.remove(name);
+                        }
+                    }
+
+                    //get all the names in csv
+                    String names = "";
+                    for (String name : selectedNames) {
+                        names += name;
+                        if (selectedNames.indexOf(name) < selectedNames.size() - 1) {
+                            names += ",";
+                        }
+                    }
+
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString("selectedNames", names);
+                    editor.apply();
+                }
+            });
+
+
+            //set close action
+            view.findViewById(R.id.nameClose).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    createdNames.removeView(view);
+                    allNames.remove(name);
+
+                    SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
+
+                    //get all the names in csv
+                    String names = "";
+                    for (String name : allNames) {
+                        names += name;
+                        if (allNames.indexOf(name) < allNames.size() - 1) {
+                            names += ",";
+                        }
+                    }
+
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.putString("allNames", names);
+                    editor.apply();
+                }
+            });
+
+            createdNames.addView(view);
+        }
+
+        fullView.addView(createdNames);
+
+        //create view to add a new name
+        final View addName = View.inflate(this, R.layout.name_submitter, null);
+
+        //set add name action
+        addName.findViewById(R.id.nameAddButton).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                EditText nameEditText = ((EditText) addName.findViewById(R.id.nameEditText));
+
+                final String name = nameEditText.getText().toString();
+
+                //reset text
+                nameEditText.setText("");
+
+                //add it to the list
+                allNames.add(name);
+
+                updateAllNames();
+
+                //add it to the UI
+                final View view = View.inflate(MainActivity.this, R.layout.closable_checkbox, null);
+
+                CheckBox checkBox = ((CheckBox) view.findViewById(R.id.nameCheckBox));
+
+                checkBox.setText(name);
+
+                //set checkbox onChange listener
+                checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                    @Override
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        if (isChecked) {
+                            if (!selectedNames.contains(name)) {
+                                selectedNames.add(name);
+                            }
+                        } else {
+                            if (selectedNames.contains(name)) {
+                                selectedNames.remove(name);
+                            }
+                        }
+
+                        updateSelectedNames();
+                    }
+                });
+
+                //set close action
+                view.findViewById(R.id.nameClose).setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        createdNames.removeView(view);
+                        allNames.remove(name);
+
+                        updateAllNames();
+                    }
+                });
+
+                createdNames.addView(view);
+            }
+        });
+
+        fullView.addView(addName);
+
+        //create the dialog box
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Select Names")
+                .setView(fullView)
+                .setPositiveButton("Ok", null)
+                .show();
+    }
+
+    //updates the shared preferences with the all names list
+    public void updateAllNames() {
+        SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
+
+        //get all the names in csv
+        String names = "";
+        for (String name : allNames) {
+            names += name;
+            if (allNames.indexOf(name) < allNames.size() - 1) {
+                names += ",";
+            }
+        }
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("allNames", names);
+        editor.apply();
+    }
+
+    //updates the shared preferences with the selected names list
+    public void updateSelectedNames() {
+        SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
+
+        //get all the names in csv
+        String names = "";
+        for (String name : selectedNames) {
+            names += name;
+            if (selectedNames.indexOf(name) < selectedNames.size() - 1) {
+                names += ",";
+            }
+        }
+
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("selectedNames", names);
+        editor.apply();
+    }
+
     @Override
-    public void onBackPressed(){
+    public void onBackPressed() {
 
     }
 
     @Override
-    public void onDestroy(){
+    public void onDestroy() {
         super.onDestroy();
         try {
             for(PullDataThread pullDataThread: pullDataThreads){
@@ -223,7 +546,7 @@ public class MainActivity extends AppCompatActivity {
         message += "High Goals: " + data[data.length-2] + " attemps and " + data[data.length-1] + " goals scored";
 
             return message;
-        }
+    }
 
     public String getDefense(int i){
         switch(i){
@@ -271,12 +594,12 @@ public class MainActivity extends AppCompatActivity {
         File file = new File(sdCard.getPath() + "/#ScoutingData/");
         file.mkdirs();
 
-        File[] files = new File(sdCard.getPath() + "/#ScoutingData/").listFiles();
+        File[] files = file.listFiles();
         if(files == null) return new ArrayList<>(); //no files in the directory
 
         ArrayList<String> data = new ArrayList<>();
 
-        for(int i=0;i<files.length;i++){
+        for(int i = 0; i < files.length; i++) {
             if(files[i].isDirectory()) continue;
 
             BufferedReader br = new BufferedReader(new FileReader(files[i]));

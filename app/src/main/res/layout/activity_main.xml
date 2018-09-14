@@ -14,24 +14,76 @@
         android:layout_height="wrap_content"
         android:text="All ready!"
         android:id="@+id/status"
-        android:layout_alignParentTop="true"
         android:layout_centerHorizontal="true" />
 
-    <Button
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Pull Data From Device"
-        android:id="@+id/connect"
+        android:layout_below="@+id/status"
         android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:id="@+id/topButtons">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enable visibility"
+            android:id="@+id/visibility" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add active device"
+            android:id="@+id/connect"/>
+
+    </LinearLayout>
 
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Enable visibility"
-        android:id="@+id/visibility"
-        android:layout_above="@+id/connect"
-        android:layout_centerHorizontal="true" />
+        android:text="Add user"
+        android:layout_below="@+id/topButtons"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/addUser" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/devicesMenu"
+        android:layout_below="@+id/addUser"
+        android:layout_above="@+id/bottomButtons">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:id="@+id/devicesMenuLinearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+        </LinearLayout>
+
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/versionNum"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/bottomButtons">
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pull All"
+            android:id="@+id/pullAll"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reload Schedule"
+            android:id="@+id/reloadSchedule"/>
+
+    </LinearLayout>
 
     <EditText
         android:layout_width="wrap_content"
