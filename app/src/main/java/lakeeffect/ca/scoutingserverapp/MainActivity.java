@@ -172,6 +172,19 @@ public class MainActivity extends AppCompatActivity {
         if (!selectedNamesText.equals("")) {
             selectedNames = new ArrayList<>(Arrays.asList(selectedNamesText.split(",")));
         }
+
+        //load devices
+        SharedPreferences devicesPreferences = getSharedPreferences("devices", MODE_PRIVATE);
+        String deviceText = devicesPreferences.getString("selectedDevices", "");
+        if (!deviceText.equals("")) {
+            String[] deviceArray = deviceText.split(",");
+
+            for (int i = 0; i < deviceArray.length; i++) {
+                BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceArray[i]);
+
+                addSelectedDevice(bluetoothDevice);
+            }
+        }
     }
 
     /**
@@ -196,15 +209,33 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 SparseBooleanArray checked = ((AlertDialog) dialog).getListView().getCheckedItemPositions();
+
                 for (int i = 0; i < ((AlertDialog) dialog).getListView().getCount(); i++) {
                     if(checked.get(i)) {
                         addSelectedDevice(devices[i]);
                     }
                 }
 
+                //convert all devices into a csv of addresses
+                String devicesString = "";
+
+                for (int i = 0; i < devicesSelected.size(); i++){
+                    //add it to the list
+                    devicesString += devicesSelected.get(i).getAddress();
+                    if (i != devicesSelected.size() - 1){
+                        devicesString += ",";
+                    }
+                }
+
+                //save this data in shared preferences
+                SharedPreferences sharedPreferences = getSharedPreferences("devices", MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("selectedDevices", devicesString);
+                editor.apply();
+
                 runOnUiThread(new Thread(){
                     public void run(){
-                        Toast.makeText(MainActivity.this, "Added to list", Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, "Updated list", Toast.LENGTH_LONG).show();
                     }
                 });
             }
@@ -238,6 +269,24 @@ public class MainActivity extends AppCompatActivity {
                 linearLayout.removeView(newDeviceMenu);
 
                 devicesSelected.remove(device);
+
+                //update the shared preferences with the new list of devices
+                //convert all devices into a csv of addresses
+                String devicesString = "";
+
+                for (int i = 0; i < devicesSelected.size(); i++){
+                    //add it to the list
+                    devicesString += devicesSelected.get(i).getAddress();
+                    if (i != devicesSelected.size() - 1){
+                        devicesString += ",";
+                    }
+                }
+
+                //save this data in shared preferences
+                SharedPreferences sharedPreferences = getSharedPreferences("devices", MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("selectedDevices", devicesString);
+                editor.apply();
 
                 runOnUiThread(new Thread(){
                     public void run(){
