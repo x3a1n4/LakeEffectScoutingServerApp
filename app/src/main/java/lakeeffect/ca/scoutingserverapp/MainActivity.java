@@ -359,6 +359,15 @@ public class MainActivity extends AppCompatActivity {
 
     //creates the schedule based on the selected usernames
     public void createSchedule() {
+        if (selectedNames.size() < 6) {
+            runOnUiThread(new Thread(){
+                public void run() {
+                    Toast.makeText(MainActivity.this, "You must select at least 6 scouts", Toast.LENGTH_SHORT).show();
+                }
+            });
+            return;
+        }
+
         int targetTimeOff = 2;
 
         //scouts currently scouting or not
