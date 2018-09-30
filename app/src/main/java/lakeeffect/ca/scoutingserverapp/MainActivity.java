@@ -392,18 +392,7 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
 
-                    //get all the names in csv
-                    String names = "";
-                    for (String name : selectedNames) {
-                        names += name;
-                        if (selectedNames.indexOf(name) < selectedNames.size() - 1) {
-                            names += ",";
-                        }
-                    }
-
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString("selectedNames", names);
-                    editor.apply();
+                    updateNames();
                 }
             });
 
@@ -415,20 +404,7 @@ public class MainActivity extends AppCompatActivity {
                     createdNames.removeView(view);
                     allNames.remove(name);
 
-                    SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
-
-                    //get all the names in csv
-                    String names = "";
-                    for (String name : allNames) {
-                        names += name;
-                        if (allNames.indexOf(name) < allNames.size() - 1) {
-                            names += ",";
-                        }
-                    }
-
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString("allNames", names);
-                    editor.apply();
+                    updateNames();
                 }
             });
 
@@ -454,7 +430,7 @@ public class MainActivity extends AppCompatActivity {
                 //add it to the list
                 allNames.add(name);
 
-                updateAllNames();
+                updateNames();
 
                 //add it to the UI
                 final View view = View.inflate(MainActivity.this, R.layout.closable_checkbox, null);
@@ -477,7 +453,7 @@ public class MainActivity extends AppCompatActivity {
                             }
                         }
 
-                        updateSelectedNames();
+                        updateNames();
                     }
                 });
 
@@ -487,8 +463,9 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         createdNames.removeView(view);
                         allNames.remove(name);
+                        selectedNames.remove(name);
 
-                        updateAllNames();
+                        updateNames();
                     }
                 });
 
@@ -506,8 +483,8 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    //updates the shared preferences with the all names list
-    public void updateAllNames() {
+    //updates the shared preferences with the all names and selected names list
+    public void updateNames() {
         SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
 
         //get all the names in csv
@@ -521,24 +498,17 @@ public class MainActivity extends AppCompatActivity {
 
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("allNames", names);
-        editor.apply();
-    }
 
-    //updates the shared preferences with the selected names list
-    public void updateSelectedNames() {
-        SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
-
-        //get all the names in csv
-        String names = "";
+        //get all the selected names in csv
+        String allSelectedNames = "";
         for (String name : selectedNames) {
-            names += name;
+            allSelectedNames += name;
             if (selectedNames.indexOf(name) < selectedNames.size() - 1) {
-                names += ",";
+                allSelectedNames += ",";
             }
         }
+        editor.putString("selectedNames", allSelectedNames);
 
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("selectedNames", names);
         editor.apply();
     }
 
