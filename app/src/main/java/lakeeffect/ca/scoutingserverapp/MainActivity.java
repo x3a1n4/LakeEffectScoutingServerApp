@@ -17,6 +17,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -457,6 +458,8 @@ public class MainActivity extends AppCompatActivity {
     //dialog box that lets you edit and deselect names
     public void openNameEditor() {
 
+        final ScrollView fullScrollView = new ScrollView(this);
+
         //contains all the names plus the view to add more
         final LinearLayout fullView = new LinearLayout(this);
         fullView.setOrientation(LinearLayout.VERTICAL);
@@ -580,10 +583,12 @@ public class MainActivity extends AppCompatActivity {
 
         fullView.addView(addName);
 
+        fullScrollView.addView(fullView);
+
         //create the dialog box
         new AlertDialog.Builder(MainActivity.this)
                 .setTitle("Select Names")
-                .setView(fullView)
+                .setView(fullScrollView)
                 .setPositiveButton("Ok", null)
                 .show();
     }
