@@ -9,6 +9,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -101,10 +103,19 @@ public class MainActivity extends AppCompatActivity {
 
         status = ((TextView) findViewById(R.id.status));
         versionNumTextView = ((TextView) findViewById(R.id.versionNum));
-        versionNumButton = ((Button) findViewById(R.id.setVersionNumber));
-        versionNumButton.setOnClickListener(new View.OnClickListener() {
+        versionNumTextView.addTextChangedListener(new TextWatcher() {
             @Override
-            public void onClick(View v) {
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
                 minVersionNum = Integer.parseInt(versionNumTextView.getText().toString());
 
                 SharedPreferences sharedPreferences = getSharedPreferences("minVersionNum", MODE_PRIVATE);
@@ -113,6 +124,7 @@ public class MainActivity extends AppCompatActivity {
                 editor.apply();
             }
         });
+        versionNumButton = ((Button) findViewById(R.id.setVersionNumber));
         SharedPreferences sharedPreferences = getSharedPreferences("minVersionNum", MODE_PRIVATE);
         minVersionNum = sharedPreferences.getInt("minVersionNum", 0);
         versionNumTextView.setText(minVersionNum + "");
