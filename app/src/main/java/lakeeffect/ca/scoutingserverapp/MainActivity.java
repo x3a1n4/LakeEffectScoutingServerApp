@@ -403,6 +403,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     createdNames.removeView(view);
                     allNames.remove(name);
+                    selectedNames.remove(name);
 
                     updateNames();
                 }
