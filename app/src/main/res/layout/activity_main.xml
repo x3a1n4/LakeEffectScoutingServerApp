@@ -66,7 +66,7 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/versionNum"
+        android:layout_above="@+id/versionNumTexts"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         android:id="@+id/bottomButtons">
@@ -85,13 +85,50 @@
 
     </LinearLayout>
 
-    <EditText
+
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:inputType="number"
-        android:ems="10"
-        android:id="@+id/versionNum"
+        android:layout_above="@+id/timeOffTexts"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/versionNumTexts">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Minimum Version Number: "
+            android:id="@+id/versionNumText"/>
+
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:ems="10"
+            android:id="@+id/versionNum"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:id="@+id/timeOffTexts">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Time Off: "
+            android:id="@+id/timeOffText"/>
+
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:ems="10"
+            android:id="@+id/timeOff"/>
+
+    </LinearLayout>
 
 </RelativeLayout>

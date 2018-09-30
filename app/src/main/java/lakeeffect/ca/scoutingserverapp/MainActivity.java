@@ -29,7 +29,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,9 +45,10 @@ public class MainActivity extends AppCompatActivity {
     Button visibility;
     TextView status;
     TextView versionNumTextView;
-    Button versionNumButton;
+    TextView timeOffTextView;
 
     int minVersionNum;
+    int targetTimeOff;
 
     String labels = null; //Retrieved one time per session during the first pull
 
@@ -116,6 +116,8 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
+                if (versionNumTextView.getText().toString().equals("")) return;
+
                 minVersionNum = Integer.parseInt(versionNumTextView.getText().toString());
 
                 SharedPreferences sharedPreferences = getSharedPreferences("minVersionNum", MODE_PRIVATE);
@@ -124,10 +126,38 @@ public class MainActivity extends AppCompatActivity {
                 editor.apply();
             }
         });
-        versionNumButton = ((Button) findViewById(R.id.setVersionNumber));
         SharedPreferences sharedPreferences = getSharedPreferences("minVersionNum", MODE_PRIVATE);
         minVersionNum = sharedPreferences.getInt("minVersionNum", 0);
         versionNumTextView.setText(minVersionNum + "");
+
+        //setup time off text view
+        timeOffTextView = ((TextView) findViewById(R.id.timeOff));
+        timeOffTextView.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (timeOffTextView.getText().toString().equals("")) return;
+
+                targetTimeOff = Integer.parseInt(timeOffTextView.getText().toString());
+
+                SharedPreferences sharedPreferences = getSharedPreferences("targetTimeOff", MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putInt("targetTimeOff", targetTimeOff);
+                editor.apply();
+            }
+        });
+        sharedPreferences = getSharedPreferences("targetTimeOff", MODE_PRIVATE);
+        targetTimeOff = sharedPreferences.getInt("targetTimeOff", 2);
+        timeOffTextView.setText(targetTimeOff + "");
 
         //add click listener for pull all
         findViewById(R.id.pullAll).setOnClickListener(new View.OnClickListener() {
@@ -380,8 +410,6 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        int targetTimeOff = 2;
-
         //scouts currently scouting or not
         Scout[] scoutsOn = new Scout[6];
         ArrayList<Scout> scoutsOff = new ArrayList<>();
@@ -443,7 +471,7 @@ public class MainActivity extends AppCompatActivity {
                 scoutsOff.remove(switchingOn);
                 scoutsOff.add(switchingOff);
 
-                //update timeOff and timeOn
+                //update targetTimeOff and timeOn
                 switchingOn.timeOn = matchNum;
                 switchingOff.timeOff = matchNum;
             }
