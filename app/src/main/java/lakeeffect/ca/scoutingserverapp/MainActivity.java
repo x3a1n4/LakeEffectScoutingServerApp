@@ -26,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -67,6 +68,8 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<String> allNames = new ArrayList<>();
     //the names that have been checked off
     ArrayList<String> selectedNames = new ArrayList<>();
+    //for each selected name, there is an array of assigned robots (0 - 5 per match, -1 being a break)
+    ArrayList<int[]> assignedRobot = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -185,6 +188,9 @@ public class MainActivity extends AppCompatActivity {
                 addSelectedDevice(bluetoothDevice);
             }
         }
+
+        //create the schedule out of the currently selected names
+        createSchedule();
     }
 
     /**
@@ -350,6 +356,104 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //creates the schedule based on the selected usernames
+    public void createSchedule() {
+        int targetTimeOff = 2;
+
+        //scouts currently scouting or not
+        Scout[] scoutsOn = new Scout[6];
+        ArrayList<Scout> scoutsOff = new ArrayList<>();
+
+        //set assigned robots to correct size
+        assignedRobot = new ArrayList<>();
+        for (int i = 0; i < selectedNames.size(); i++) {
+            assignedRobot.add(new int[robotSchedule.size()]);
+        }
+
+        for (int i = 0; i < scoutsOn.length; i++) {
+            scoutsOn[i] = new Scout(i, selectedNames.get(i));
+        }
+
+        for (int i = 6; i < selectedNames.size(); i++) {
+            System.out.println("something was changed OFF");
+            scoutsOff.add(new Scout(i, selectedNames.get(i)));
+        }
+
+        for (int i = 0; i < selectedNames.size(); i++) {
+            System.out.println("selected name: " + selectedNames.get(i));
+        }
+
+        for (int matchNum = 0; matchNum < robotSchedule.size(); matchNum++) {
+            //calculate the schedule for this match
+            //find scouts to switch on (the scouts that have been off >= targetTimeOff)
+            ArrayList<Scout> scoutsToSwitchOn = new ArrayList<>();
+            for (int i = 0; i < scoutsOff.size(); i++) {
+                if (matchNum - scoutsOff.get(i).timeOff >= targetTimeOff && scoutsToSwitchOn.size() < 6) {
+                    scoutsToSwitchOn.add(scoutsOff.get(i));
+                }
+            }
+
+            //find scouts to switch off (scouts with the highest time)
+            ArrayList<Scout> scoutsToSwitchOff = new ArrayList<>();
+            //sort by time on
+            for (int i = 0; i < scoutsOn.length; i++) {
+                //the index to add this scout when sorted
+                int indexToAdd = scoutsToSwitchOff.size();
+                for (int s = 0; s < scoutsToSwitchOff.size(); s++) {
+                    if (matchNum - scoutsOn[i].timeOn > matchNum - scoutsToSwitchOff.get(s).timeOn) {
+                        indexToAdd = s;
+                        break;
+                    }
+                }
+
+                //add at index
+                scoutsToSwitchOff.add(indexToAdd, scoutsOn[i]);
+            }
+
+            //swap scouts on with scouts off
+            for (int i = 0; i < scoutsToSwitchOn.size(); i++) {
+                //scout switching on and off
+                Scout switchingOn = scoutsToSwitchOn.get(i);
+                Scout switchingOff = scoutsToSwitchOff.get(i);
+
+                scoutsOn[getScout(switchingOff.id, scoutsOn)] = switchingOn;
+
+                scoutsOff.remove(switchingOn);
+                scoutsOff.add(switchingOff);
+
+                //update timeOff and timeOn
+                switchingOn.timeOn = matchNum;
+                switchingOff.timeOff = matchNum;
+            }
+
+            //set the schedule for this match
+            for (int i = 0; i < scoutsOn.length; i++) {
+                assignedRobot.get(scoutsOn[i].id)[matchNum] = i;
+            }
+            for (int i = 0; i < scoutsOff.size(); i++) {
+                assignedRobot.get(scoutsOff.get(i).id)[matchNum] = -1;
+            }
+        }
+    }
+
+    public int getScout(int id, ArrayList<Scout> scouts) {
+        for (int i = 0; i < scouts.size(); i++) {
+            if (scouts.get(i).id == id) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public int getScout(int id, Scout[] scouts) {
+        for (int i = 0; i < scouts.length; i++) {
+            if (scouts[i].id == id) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     //dialog box that lets you edit and deselect names
     public void openNameEditor() {
 
@@ -511,6 +615,18 @@ public class MainActivity extends AppCompatActivity {
         editor.putString("selectedNames", allSelectedNames);
 
         editor.apply();
+
+
+        //for testing purposes TODO REMOVE
+        createSchedule();
+        String message = "";
+        for (int[] robots : assignedRobot){
+            for (int robotNumber : robots) {
+                message += robotNumber + ",";
+            }
+            message += "DONE\n";
+        }
+        System.out.println(message + "DONEEEE");
     }
 
     @Override
