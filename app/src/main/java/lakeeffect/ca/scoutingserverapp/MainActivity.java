@@ -588,7 +588,7 @@ public class MainActivity extends AppCompatActivity {
             checkBox.setText(name);
 
             //if it is selected, check the box
-            if (getScout(name, selectedNames) == -1) {
+            if (getScout(name, selectedNames) != -1) {
                 checkBox.setChecked(true);
             }
 
