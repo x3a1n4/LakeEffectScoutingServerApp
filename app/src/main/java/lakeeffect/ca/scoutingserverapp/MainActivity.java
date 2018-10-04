@@ -70,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
     //list of allNames added
     ArrayList<String> allNames = new ArrayList<>();
     //the names that have been checked off
-    ArrayList<String> selectedNames = new ArrayList<>();
+    ArrayList<Scout> selectedNames = new ArrayList<>();
     //for each selected name, there is an array of assigned robots (0 - 5 per match, -1 being a break)
     ArrayList<int[]> assignedRobot = new ArrayList<>();
 
@@ -216,7 +216,11 @@ public class MainActivity extends AppCompatActivity {
         }
         String selectedNamesText = namesPreferences.getString("selectedNames", "");
         if (!selectedNamesText.equals("")) {
-            selectedNames = new ArrayList<>(Arrays.asList(selectedNamesText.split(",")));
+            String[] selectedNamesArray = selectedNamesText.split(",");
+
+            for (int i = 0; i < selectedNamesArray.length; i++) {
+                selectedNames.add(new Scout(i, selectedNamesArray[i]));
+            }
         }
 
         //load devices
@@ -420,20 +424,62 @@ public class MainActivity extends AppCompatActivity {
             assignedRobot.add(new int[robotSchedule.size()]);
         }
 
+        //used to determine if there are not enough ready scouts
+        int nonReadyScouts = 0;
         for (int i = 0; i < scoutsOn.length; i++) {
-            scoutsOn[i] = new Scout(i, selectedNames.get(i));
+            if (scoutsOn.length - nonReadyScouts < 6) {
+                //not enough scouts
+                runOnUiThread(new Thread(){
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "You must select at least 6 scouts", Toast.LENGTH_SHORT).show();
+                    }
+                });
+                return;
+            }
+
+            //if they are not starting on the first match
+            if (selectedNames.get(i).startMatch > 0) {
+                Scout scout = selectedNames.get(i);
+                selectedNames.remove(scout);
+                selectedNames.add(scout);
+                //try again
+                i--;
+                //add to the non ready scouts to make sure this is not an infinite loop
+                nonReadyScouts++;
+                continue;
+            }
+
+            scoutsOn[i] = new Scout(i, selectedNames.get(i).name);
         }
 
         for (int i = 6; i < selectedNames.size(); i++) {
-            System.out.println("something was changed OFF");
-            scoutsOff.add(new Scout(i, selectedNames.get(i)));
-        }
+            //if they are not starting on the first match
+            if (selectedNames.get(i).startMatch > 0) {
+                continue;
+            }
 
-        for (int i = 0; i < selectedNames.size(); i++) {
-            System.out.println("selected name: " + selectedNames.get(i));
+            Scout scout = new Scout(i, selectedNames.get(i).name);
+            scoutsOff.add(scout);
+            scout.timeOff = 0;
         }
 
         for (int matchNum = 0; matchNum < robotSchedule.size(); matchNum++) {
+            //figure out if some selected names should be added because it is now their start match
+            for (int i = 0; i < selectedNames.size(); i++) {
+                //if it is time to add this scout to the roster and they are not already added
+                Scout scout = selectedNames.get(i);
+                if (scout.startMatch <= matchNum && getScout(i, scoutsOff) == -1 && getScout(i, scoutsOn) == -1) {
+                    Scout newScout = new Scout(i, scout.name);
+                    scoutsOff.add(newScout);
+                    newScout.timeOff = 0;
+
+                    //set this scout to off before this
+                    for (int s = 0; s < matchNum; s++) {
+                        assignedRobot.get(newScout.id)[s] = -1;
+                    }
+                }
+            }
+
             //calculate the schedule for this match
             //find scouts to switch on (the scouts that have been off >= targetTimeOff)
             ArrayList<Scout> scoutsToSwitchOn = new ArrayList<>();
@@ -504,6 +550,15 @@ public class MainActivity extends AppCompatActivity {
         return -1;
     }
 
+    public int getScout(String name, ArrayList<Scout> scouts) {
+        for (int i = 0; i < scouts.size(); i++) {
+            if (scouts.get(i).name.equals(name)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     //dialog box that lets you edit and deselect names
     public void openNameEditor() {
 
@@ -517,6 +572,11 @@ public class MainActivity extends AppCompatActivity {
         final LinearLayout createdNames = new LinearLayout(this);
         createdNames.setOrientation(LinearLayout.VERTICAL);
 
+        //create view to add a new name
+        final View addName = View.inflate(this, R.layout.name_submitter, null);
+        //get match number view
+        final TextView currentMatchNumber = ((TextView) addName.findViewById(R.id.currentMatchNumber));
+
         //add checkbox and close button for each username
         for (int i = 0; i < allNames.size(); i++) {
             final View view = View.inflate(this, R.layout.closable_checkbox, null);
@@ -528,7 +588,7 @@ public class MainActivity extends AppCompatActivity {
             checkBox.setText(name);
 
             //if it is selected, check the box
-            if (selectedNames.contains(name)) {
+            if (getScout(name, selectedNames) == -1) {
                 checkBox.setChecked(true);
             }
 
@@ -539,12 +599,12 @@ public class MainActivity extends AppCompatActivity {
                     SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
 
                     if (isChecked) {
-                        if (!selectedNames.contains(name)) {
-                            selectedNames.add(name);
+                        if (getScout(name, selectedNames) == -1) {
+                            selectedNames.add(new Scout(name, Integer.parseInt(currentMatchNumber.getText().toString())));
                         }
                     } else {
-                        if (selectedNames.contains(name)) {
-                            selectedNames.remove(name);
+                        if (getScout(name, selectedNames) != -1) {
+                            selectedNames.remove(getScout(name, selectedNames));
                         }
                     }
 
@@ -559,7 +619,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     createdNames.removeView(view);
                     allNames.remove(name);
-                    selectedNames.remove(name);
+                    selectedNames.remove(getScout(name, selectedNames));
 
                     updateNames();
                 }
@@ -569,9 +629,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         fullView.addView(createdNames);
-
-        //create view to add a new name
-        final View addName = View.inflate(this, R.layout.name_submitter, null);
 
         //set add name action
         addName.findViewById(R.id.nameAddButton).setOnClickListener(new View.OnClickListener() {
@@ -601,12 +658,12 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                         if (isChecked) {
-                            if (!selectedNames.contains(name)) {
-                                selectedNames.add(name);
+                            if (getScout(name, selectedNames) == -1) {
+                                selectedNames.add(new Scout(name, Integer.parseInt(currentMatchNumber.getText().toString())));
                             }
                         } else {
-                            if (selectedNames.contains(name)) {
-                                selectedNames.remove(name);
+                            if (getScout(name, selectedNames) != -1) {
+                                selectedNames.remove(getScout(name, selectedNames));
                             }
                         }
 
@@ -620,7 +677,7 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         createdNames.removeView(view);
                         allNames.remove(name);
-                        selectedNames.remove(name);
+                        selectedNames.remove(getScout(name, selectedNames));
 
                         updateNames();
                     }
@@ -660,9 +717,9 @@ public class MainActivity extends AppCompatActivity {
 
         //get all the selected names in csv
         String allSelectedNames = "";
-        for (String name : selectedNames) {
-            allSelectedNames += name;
-            if (selectedNames.indexOf(name) < selectedNames.size() - 1) {
+        for (Scout scout : selectedNames) {
+            allSelectedNames += scout.name;
+            if (selectedNames.indexOf(scout) < selectedNames.size() - 1) {
                 allSelectedNames += ",";
             }
         }
