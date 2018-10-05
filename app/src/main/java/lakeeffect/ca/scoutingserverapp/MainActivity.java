@@ -215,11 +215,14 @@ public class MainActivity extends AppCompatActivity {
             allNames = new ArrayList<>(Arrays.asList(allNamesText.split(",")));
         }
         String selectedNamesText = namesPreferences.getString("selectedNames", "");
+        String selectedNameStartMatchesText = namesPreferences.getString("selectedNameStartMatches", "");
         if (!selectedNamesText.equals("")) {
             String[] selectedNamesArray = selectedNamesText.split(",");
+            String[] selectedNameStartMatchesArray = selectedNameStartMatchesText.split(",");
 
             for (int i = 0; i < selectedNamesArray.length; i++) {
-                selectedNames.add(new Scout(i, selectedNamesArray[i]));
+                //plus one because in the UI, match 1 is really match zero. This is in UI matches
+                selectedNames.add(new Scout(selectedNamesArray[i], Integer.parseInt(selectedNameStartMatchesArray[i]) + 1));
             }
         }
 
@@ -717,13 +720,18 @@ public class MainActivity extends AppCompatActivity {
 
         //get all the selected names in csv
         String allSelectedNames = "";
+        String allSelectedNameStartMatches = "";
         for (Scout scout : selectedNames) {
             allSelectedNames += scout.name;
+            allSelectedNameStartMatches += scout.startMatch;
             if (selectedNames.indexOf(scout) < selectedNames.size() - 1) {
                 allSelectedNames += ",";
+                allSelectedNameStartMatches += ",";
             }
         }
         editor.putString("selectedNames", allSelectedNames);
+        editor.putString("selectedNameStartMatches", allSelectedNameStartMatches);
+
 
         editor.apply();
 
