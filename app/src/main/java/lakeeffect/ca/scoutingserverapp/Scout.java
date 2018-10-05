@@ -1,5 +1,7 @@
 package lakeeffect.ca.scoutingserverapp;
 
+import java.util.ArrayList;
+
 /**
  * Used when the scouting schedule is calculated
  */
@@ -13,8 +15,12 @@ public class Scout {
     //the match this scout started being on
     int timeOn = 0;
 
-    //match started on
-    int startMatch = 0;
+    //matches started on (multiple if they join, then leave, then join)
+    ArrayList<Integer> startMatches = new ArrayList<>();
+
+    //matches this scout left (multiple if they join, then leave, then join)
+    //inclusive
+    ArrayList<Integer> lastMatches = new ArrayList<>();
 
     public Scout(int id, String name) {
         this.id = id;
@@ -23,9 +29,37 @@ public class Scout {
 
     public Scout(String name, int startMatch) {
         this.name = name;
-        this.startMatch = startMatch - 1;
-        if (this.startMatch < 0) {
-            this.startMatch = 0;
+
+        //make sure startMatch is not negative
+        if (startMatch < 0) {
+            startMatch = 0;
         }
+        startMatches.add(startMatch - 1);
+    }
+
+    //gets lowest start match
+    public int getLowestStartMatch() {
+        int lowestStartMatch = -1;
+        for (int startMatch : startMatches) {
+            if (startMatch < lowestStartMatch || lowestStartMatch == -1) {
+                lowestStartMatch = startMatch;
+            }
+        }
+
+        return lowestStartMatch;
+    }
+
+    //does this scout exist at this match
+    public boolean existsAtMatch(int matchNum) {
+        for (int i = 0; i < startMatches.size(); i++) {
+            if (startMatches.get(i) <= matchNum) {
+                //has it been closed since then
+                if (lastMatches.size() >= matchNum) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

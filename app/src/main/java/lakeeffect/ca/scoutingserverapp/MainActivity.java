@@ -441,7 +441,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             //if they are not starting on the first match
-            if (selectedNames.get(i).startMatch > 0) {
+            if (selectedNames.get(i).getLowestStartMatch() > 0) {
                 Scout scout = selectedNames.get(i);
                 selectedNames.remove(scout);
                 selectedNames.add(scout);
@@ -457,7 +457,7 @@ public class MainActivity extends AppCompatActivity {
 
         for (int i = 6; i < selectedNames.size(); i++) {
             //if they are not starting on the first match
-            if (selectedNames.get(i).startMatch > 0) {
+            if (selectedNames.get(i).getLowestStartMatch() > 0) {
                 continue;
             }
 
@@ -467,11 +467,12 @@ public class MainActivity extends AppCompatActivity {
         }
 
         for (int matchNum = 0; matchNum < robotSchedule.size(); matchNum++) {
-            //figure out if some selected names should be added because it is now their start match
+            //figure out if some selected names should be added or removed because it is now their start match or last match
             for (int i = 0; i < selectedNames.size(); i++) {
                 //if it is time to add this scout to the roster and they are not already added
                 Scout scout = selectedNames.get(i);
-                if (scout.startMatch <= matchNum && getScout(i, scoutsOff) == -1 && getScout(i, scoutsOn) == -1) {
+                boolean existsAtMatch = scout.existsAtMatch(matchNum);
+                if (existsAtMatch && getScout(i, scoutsOff) == -1 && getScout(i, scoutsOn) == -1) {
                     Scout newScout = new Scout(i, scout.name);
                     scoutsOff.add(newScout);
                     newScout.timeOff = 0;
@@ -479,6 +480,21 @@ public class MainActivity extends AppCompatActivity {
                     //set this scout to off before this
                     for (int s = 0; s < matchNum; s++) {
                         assignedRobot.get(newScout.id)[s] = -1;
+                    }
+                } else if (!existsAtMatch && getScout(i, scoutsOff) != -1 && getScout(i, scoutsOn) != -1) {
+                    //remove the scout for now
+                    int index = getScout(i, scoutsOff);
+                    if (index == -1){
+                        index = getScout(i, scoutsOn);
+
+                        //TODO make it so that you can immediately switch a scout off
+                    } else {
+                        scoutsOff.remove(index);
+                    }
+
+                    //set this scout to off all matches after this
+                    for (int s = 0; s < matchNum; s++) {
+                        assignedRobot.get(i)[s] = -1;
                     }
                 }
             }
@@ -723,7 +739,7 @@ public class MainActivity extends AppCompatActivity {
         String allSelectedNameStartMatches = "";
         for (Scout scout : selectedNames) {
             allSelectedNames += scout.name;
-            allSelectedNameStartMatches += scout.startMatch;
+            allSelectedNameStartMatches += scout.startMatches;
             if (selectedNames.indexOf(scout) < selectedNames.size() - 1) {
                 allSelectedNames += ",";
                 allSelectedNameStartMatches += ",";
