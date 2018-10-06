@@ -240,7 +240,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //create the schedule out of the currently selected names
-        createSchedule();
+        final String success = createSchedule();
+        if (success != null) {
+            runOnUiThread(new Thread(){
+                public void run() {
+                    Toast.makeText(MainActivity.this, success, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     /**
@@ -407,14 +414,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     //creates the schedule based on the selected usernames
-    public void createSchedule() {
+    //returns null if successful, and error message if not
+    public String createSchedule() {
         if (selectedNames.size() < 6) {
-            runOnUiThread(new Thread(){
-                public void run() {
-                    Toast.makeText(MainActivity.this, "You must select at least 6 scouts", Toast.LENGTH_SHORT).show();
-                }
-            });
-            return;
+            return "You must select at least 6 scouts";
         }
 
         //scouts currently scouting or not
@@ -432,12 +435,7 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < scoutsOn.length; i++) {
             if (scoutsOn.length - nonReadyScouts < 6) {
                 //not enough scouts
-                runOnUiThread(new Thread(){
-                    public void run() {
-                        Toast.makeText(MainActivity.this, "You must select at least 6 scouts", Toast.LENGTH_SHORT).show();
-                    }
-                });
-                return;
+                return "You must select at least 6 ready scouts";
             }
 
             //if they are not starting on the first match
@@ -482,12 +480,24 @@ public class MainActivity extends AppCompatActivity {
                         assignedRobot.get(newScout.id)[s] = -1;
                     }
                 } else if (!existsAtMatch && (getScout(i, scoutsOff) != -1 || getScout(i, scoutsOn) != -1)) {
-                    //remove the scout for now
                     int index = getScout(i, scoutsOff);
                     if (index == -1){
                         index = getScout(i, scoutsOn);
 
-                        //TODO make it so that you can immediately switch a scout off
+                        //check if there this scout can switch off
+                        boolean canSwitchOff = false;
+                        for (int s = 0; s < scoutsOff.size(); s++) {
+                            if (matchNum - scoutsOff.get(s).timeOff >= targetTimeOff) {
+                                canSwitchOff = true;
+                                break;
+                            }
+                        }
+
+                        if (!canSwitchOff) {
+                            return "Nobody is ready to switch off this match, try next match.";
+                        }
+
+                        scout.timeOn = Integer.MAX_VALUE;
                     } else {
                         scoutsOff.remove(index);
                     }
@@ -549,6 +559,8 @@ public class MainActivity extends AppCompatActivity {
                 assignedRobot.get(scoutsOff.get(i).id)[matchNum] = -1;
             }
         }
+
+        return null;
     }
 
     public int getScout(int id, ArrayList<Scout> scouts) {
@@ -733,7 +745,7 @@ public class MainActivity extends AppCompatActivity {
                     //this action should not happen, this is an invalid time
                     runOnUiThread(new Thread() {
                         public void run() {
-                            Toast.makeText(MainActivity.this, "This is an invalid match number to disable the scout at", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "The scout is not enabled at that match", Toast.LENGTH_SHORT).show();
                         }
                     });
                     checkbox.setChecked(true);
@@ -741,6 +753,19 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 scout.lastMatches.add(matchNum);
+
+                //check if there were errors from this change
+                final String success = createSchedule();
+                if (success != null) {
+                    runOnUiThread(new Thread(){
+                        public void run() {
+                            Toast.makeText(MainActivity.this, success, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    //undo
+                    scout.lastMatches.remove(scout.lastMatches.size() - 1);
+                    checkbox.setChecked(true);
+                }
             }
         }
 
@@ -782,7 +807,15 @@ public class MainActivity extends AppCompatActivity {
 
 
         //for testing purposes TODO REMOVE
-        createSchedule();
+        final String success = createSchedule();
+        if (success != null) {
+            runOnUiThread(new Thread(){
+                public void run() {
+                    Toast.makeText(MainActivity.this, success, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
         String message = "";
         for (int[] robots : assignedRobot){
             for (int robotNumber : robots) {
