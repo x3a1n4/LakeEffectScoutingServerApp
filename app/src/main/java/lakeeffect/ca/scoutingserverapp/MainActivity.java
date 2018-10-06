@@ -481,7 +481,7 @@ public class MainActivity extends AppCompatActivity {
                     for (int s = 0; s < matchNum; s++) {
                         assignedRobot.get(newScout.id)[s] = -1;
                     }
-                } else if (!existsAtMatch && getScout(i, scoutsOff) != -1 && getScout(i, scoutsOn) != -1) {
+                } else if (!existsAtMatch && (getScout(i, scoutsOff) != -1 || getScout(i, scoutsOn) != -1)) {
                     //remove the scout for now
                     int index = getScout(i, scoutsOff);
                     if (index == -1){
@@ -493,7 +493,7 @@ public class MainActivity extends AppCompatActivity {
                     }
 
                     //set this scout to off all matches after this
-                    for (int s = 0; s < matchNum; s++) {
+                    for (int s = matchNum; s < assignedRobot.get(i).length; s++) {
                         assignedRobot.get(i)[s] = -1;
                     }
                 }
@@ -615,19 +615,7 @@ public class MainActivity extends AppCompatActivity {
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
-
-                    if (isChecked) {
-                        if (getScout(name, selectedNames) == -1) {
-                            selectedNames.add(new Scout(name, Integer.parseInt(currentMatchNumber.getText().toString())));
-                        }
-                    } else {
-                        if (getScout(name, selectedNames) != -1) {
-                            selectedNames.remove(getScout(name, selectedNames));
-                        }
-                    }
-
-                    updateNames();
+                    nameClicked(buttonView, isChecked, name, currentMatchNumber);
                 }
             });
 
@@ -638,7 +626,9 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     createdNames.removeView(view);
                     allNames.remove(name);
-                    selectedNames.remove(getScout(name, selectedNames));
+                    if (getScout(name, selectedNames) != -1) {
+                        selectedNames.remove(getScout(name, selectedNames));
+                    }
 
                     updateNames();
                 }
@@ -676,17 +666,7 @@ public class MainActivity extends AppCompatActivity {
                 checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        if (isChecked) {
-                            if (getScout(name, selectedNames) == -1) {
-                                selectedNames.add(new Scout(name, Integer.parseInt(currentMatchNumber.getText().toString())));
-                            }
-                        } else {
-                            if (getScout(name, selectedNames) != -1) {
-                                selectedNames.remove(getScout(name, selectedNames));
-                            }
-                        }
-
-                        updateNames();
+                        nameClicked(buttonView, isChecked, name, currentMatchNumber);
                     }
                 });
 
@@ -696,7 +676,9 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         createdNames.removeView(view);
                         allNames.remove(name);
-                        selectedNames.remove(getScout(name, selectedNames));
+                        if (getScout(name, selectedNames) != -1) {
+                            selectedNames.remove(getScout(name, selectedNames));
+                        }
 
                         updateNames();
                     }
@@ -716,6 +698,53 @@ public class MainActivity extends AppCompatActivity {
                 .setView(fullScrollView)
                 .setPositiveButton("Ok", null)
                 .show();
+    }
+
+    //called when a name is checked or unchecked
+    public void nameClicked(CompoundButton checkbox, boolean isChecked, String name, TextView currentMatchNumber) {
+        int scoutIndex = getScout(name, selectedNames);
+        int matchNum = Integer.parseInt(currentMatchNumber.getText().toString());
+
+        if (isChecked) {
+            if (scoutIndex == -1) {
+                selectedNames.add(new Scout(name, matchNum));
+            } else {
+                Scout scout = selectedNames.get(scoutIndex);
+
+                if (scout.existsAtMatch(matchNum)) {
+                    //this action should not happen, this is an invalid time
+                    runOnUiThread(new Thread() {
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "This scout is already enabled at that match", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    checkbox.setChecked(false);
+                    return;
+                }
+
+                //enable them at that match number
+                scout.startMatches.add(matchNum);
+            }
+        } else {
+            if (scoutIndex != -1) {
+                Scout scout = selectedNames.get(scoutIndex);
+
+                if (!scout.existsAtMatch(matchNum)) {
+                    //this action should not happen, this is an invalid time
+                    runOnUiThread(new Thread() {
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "This is an invalid match number to disable the scout at", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    checkbox.setChecked(true);
+                    return;
+                }
+
+                scout.lastMatches.add(matchNum);
+            }
+        }
+
+        updateNames();
     }
 
     //updates the shared preferences with the all names and selected names list
@@ -739,7 +768,7 @@ public class MainActivity extends AppCompatActivity {
         String allSelectedNameStartMatches = "";
         for (Scout scout : selectedNames) {
             allSelectedNames += scout.name;
-            allSelectedNameStartMatches += scout.startMatches;
+            allSelectedNameStartMatches += scout.startMatches.get(0);
             if (selectedNames.indexOf(scout) < selectedNames.size() - 1) {
                 allSelectedNames += ",";
                 allSelectedNameStartMatches += ",";
