@@ -44,10 +44,10 @@ public class MainActivity extends AppCompatActivity {
     Button connect;
     Button visibility;
     TextView status;
-    TextView versionNumTextView;
-    TextView timeOffTextView;
+    EditText versionNumEditText;
+    EditText timeOffEditText;
     Button timeOffSet;
-    TextView timeOffMatchNumTextView;
+    EditText timeOffMatchNumEditText;
 
     int minVersionNum;
     TimeOff targetTimeOff;
@@ -104,8 +104,8 @@ public class MainActivity extends AppCompatActivity {
         });
 
         status = ((TextView) findViewById(R.id.status));
-        versionNumTextView = ((TextView) findViewById(R.id.versionNum));
-        versionNumTextView.addTextChangedListener(new TextWatcher() {
+        versionNumEditText = ((EditText) findViewById(R.id.versionNum));
+        versionNumEditText.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -118,9 +118,9 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (versionNumTextView.getText().toString().equals("")) return;
+                if (versionNumEditText.getText().toString().equals("")) return;
 
-                minVersionNum = Integer.parseInt(versionNumTextView.getText().toString());
+                minVersionNum = Integer.parseInt(versionNumEditText.getText().toString());
 
                 SharedPreferences sharedPreferences = getSharedPreferences("minVersionNum", MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         });
         SharedPreferences sharedPreferences = getSharedPreferences("minVersionNum", MODE_PRIVATE);
         minVersionNum = sharedPreferences.getInt("minVersionNum", 0);
-        versionNumTextView.setText(minVersionNum + "");
+        versionNumEditText.setText(minVersionNum + "");
 
         //load schedule into memory
         try {
@@ -152,15 +152,15 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //setup time off text view
-        timeOffTextView = ((TextView) findViewById(R.id.timeOff));
-        timeOffMatchNumTextView = ((TextView) findViewById(R.id.timeOffMatchNum));
+        timeOffEditText = ((EditText) findViewById(R.id.timeOff));
+        timeOffMatchNumEditText = ((EditText) findViewById(R.id.timeOffMatchNum));
         timeOffSet = ((Button) findViewById(R.id.timeOffSetButton));
         timeOffSet.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
-                if (timeOffTextView.getText().toString().equals("")) return;
-                if (timeOffMatchNumTextView.getText().toString().equals("")){
+                if (timeOffEditText.getText().toString().equals("")) return;
+                if (timeOffMatchNumEditText.getText().toString().equals("")){
                     runOnUiThread(new Thread(){
                         public void run() {
                             Toast.makeText(MainActivity.this, "You need to specify a match number for this to happen at (can be 1)", Toast.LENGTH_SHORT).show();
@@ -169,8 +169,8 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                int newTimeOff = Integer.parseInt(timeOffTextView.getText().toString());
-                int switchMatch = Integer.parseInt(timeOffMatchNumTextView.getText().toString()) - 1;
+                int newTimeOff = Integer.parseInt(timeOffEditText.getText().toString());
+                int switchMatch = Integer.parseInt(timeOffMatchNumEditText.getText().toString()) - 1;
 
                 targetTimeOff.targetTimeOff.add(newTimeOff);
                 targetTimeOff.switchMatches.add(switchMatch);
@@ -202,7 +202,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //set text view to current target time off
-        timeOffTextView.setText(targetTimeOff.getTimeOff(robotSchedule.size() - 1) + "");
+        timeOffEditText.setText(targetTimeOff.getTimeOff(robotSchedule.size() - 1) + "");
 
         //add click listener for pull all
         findViewById(R.id.pullAll).setOnClickListener(new View.OnClickListener() {
