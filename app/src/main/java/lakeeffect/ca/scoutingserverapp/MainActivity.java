@@ -46,9 +46,11 @@ public class MainActivity extends AppCompatActivity {
     TextView status;
     TextView versionNumTextView;
     TextView timeOffTextView;
+    Button timeOffSet;
+    TextView timeOffMatchNumTextView;
 
     int minVersionNum;
-    int targetTimeOff;
+    TimeOff targetTimeOff;
 
     String labels = null; //Retrieved one time per session during the first pull
 
@@ -130,34 +132,77 @@ public class MainActivity extends AppCompatActivity {
         minVersionNum = sharedPreferences.getInt("minVersionNum", 0);
         versionNumTextView.setText(minVersionNum + "");
 
+        //load schedule into memory
+        try {
+            readSchedule();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //load schedule when button is pressed.
+        findViewById(R.id.reloadSchedule).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    readSchedule();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
         //setup time off text view
         timeOffTextView = ((TextView) findViewById(R.id.timeOff));
-        timeOffTextView.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
+        timeOffMatchNumTextView = ((TextView) findViewById(R.id.timeOffMatchNum));
+        timeOffSet = ((Button) findViewById(R.id.timeOffSetButton));
+        timeOffSet.setOnClickListener(new View.OnClickListener() {
 
             @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
+            public void onClick(View v) {
                 if (timeOffTextView.getText().toString().equals("")) return;
+                if (timeOffMatchNumTextView.getText().toString().equals("")){
+                    runOnUiThread(new Thread(){
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "You need to specify a match number for this to happen at (can be 1)", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    return;
+                }
 
-                targetTimeOff = Integer.parseInt(timeOffTextView.getText().toString());
+                int newTimeOff = Integer.parseInt(timeOffTextView.getText().toString());
+                int switchMatch = Integer.parseInt(timeOffMatchNumTextView.getText().toString()) - 1;
+
+                targetTimeOff.targetTimeOff.add(newTimeOff);
+                targetTimeOff.switchMatches.add(switchMatch);
 
                 SharedPreferences sharedPreferences = getSharedPreferences("targetTimeOff", MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putInt("targetTimeOff", targetTimeOff);
+                editor.putInt("targetTimeOff" + (targetTimeOff.targetTimeOff.size() - 1), newTimeOff);
+                editor.putInt("switchMatches" + (targetTimeOff.switchMatches.size() - 1), switchMatch);
+                editor.putInt("targetTimeOffSize" + (targetTimeOff.targetTimeOff.size()), targetTimeOff.targetTimeOff.size());
+                editor.putInt("switchMatchesSize" + (targetTimeOff.switchMatches.size()), targetTimeOff.switchMatches.size());
                 editor.apply();
+
+                runOnUiThread(new Thread(){
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "Added new time off", Toast.LENGTH_SHORT).show();
+                    }
+                });
             }
         });
         sharedPreferences = getSharedPreferences("targetTimeOff", MODE_PRIVATE);
-        targetTimeOff = sharedPreferences.getInt("targetTimeOff", 2);
-        timeOffTextView.setText(targetTimeOff + "");
+        targetTimeOff = new TimeOff();
+        int targetTimeOffSize = sharedPreferences.getInt("targetTimeOffSize", 1);
+        for (int i = 0; i < targetTimeOffSize; i++) {
+            targetTimeOff.targetTimeOff.add(sharedPreferences.getInt("targetTimeOff" + i, 2));
+        }
+        int switchMatchesSize = sharedPreferences.getInt("switchMatchesSize", 1);
+        for (int i = 0; i < switchMatchesSize; i++) {
+            targetTimeOff.switchMatches.add(sharedPreferences.getInt("switchMatches" + i, 0));
+        }
+
+        //set text view to current target time off
+        timeOffTextView.setText(targetTimeOff.getTimeOff(robotSchedule.size() - 1) + "");
 
         //add click listener for pull all
         findViewById(R.id.pullAll).setOnClickListener(new View.OnClickListener() {
@@ -188,25 +233,6 @@ public class MainActivity extends AppCompatActivity {
         for(String line: data){
             uuids.add(getUUIDFromData(line));
         }
-
-        //load schedule into memory
-        try {
-            readSchedule();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        //load schedule when button is pressed.
-        findViewById(R.id.reloadSchedule).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    readSchedule();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
 
         //load names
         SharedPreferences namesPreferences = getSharedPreferences("names", MODE_PRIVATE);
@@ -516,7 +542,7 @@ public class MainActivity extends AppCompatActivity {
                         //check if there this scout can switch off
                         boolean canSwitchOff = false;
                         for (int s = 0; s < scoutsOff.size(); s++) {
-                            if (matchNum - scoutsOff.get(s).timeOff >= targetTimeOff) {
+                            if (matchNum - scoutsOff.get(s).timeOff >= targetTimeOff.getTimeOff(matchNum)) {
                                 canSwitchOff = true;
                                 break;
                             }
@@ -527,7 +553,7 @@ public class MainActivity extends AppCompatActivity {
                         }
 
                         //make sure this scout goes off next
-                        scoutsOn[index].timeOn = -targetTimeOff;
+                        scoutsOn[index].timeOn = -targetTimeOff.getTimeOff(matchNum);
                     } else {
                         scoutsOff.remove(index);
                     }
@@ -538,7 +564,7 @@ public class MainActivity extends AppCompatActivity {
             //find scouts to switch on (the scouts that have been off >= targetTimeOff)
             ArrayList<Scout> scoutsToSwitchOn = new ArrayList<>();
             for (int i = 0; i < scoutsOff.size(); i++) {
-                if (matchNum - scoutsOff.get(i).timeOff >= targetTimeOff && scoutsToSwitchOn.size() < 6) {
+                if (matchNum - scoutsOff.get(i).timeOff >= targetTimeOff.getTimeOff(matchNum) && scoutsToSwitchOn.size() < 6) {
                     scoutsToSwitchOn.add(scoutsOff.get(i));
                 }
             }

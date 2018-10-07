@@ -112,7 +112,7 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
+        android:layout_above="@+id/timeOffMatchNumTexts"
         android:layout_centerHorizontal="true"
         android:id="@+id/timeOffTexts">
 
@@ -123,11 +123,41 @@
             android:id="@+id/timeOffText"/>
 
         <EditText
-            android:layout_width="wrap_content"
+            android:layout_width="84dp"
             android:layout_height="wrap_content"
             android:inputType="number"
             android:ems="10"
             android:id="@+id/timeOff"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/timeOffMatchNumTexts">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Match Num: "
+            android:id="@+id/timeOffMatchNumText"/>
+
+        <EditText
+            android:id="@+id/timeOffMatchNum"
+            android:layout_width="84dp"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="number" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/timeOffSetButton"
+            android:layout_marginLeft="10dp"
+            android:text="Set"/>
+
 
     </LinearLayout>
 
