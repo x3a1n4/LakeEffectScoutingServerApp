@@ -9,6 +9,8 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +19,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -41,10 +44,13 @@ public class MainActivity extends AppCompatActivity {
     Button connect;
     Button visibility;
     TextView status;
-    TextView versionNumTextView;
-    Button versionNumButton;
+    EditText versionNumEditText;
+    EditText timeOffEditText;
+    Button timeOffSet;
+    EditText timeOffMatchNumEditText;
 
     int minVersionNum;
+    TimeOff targetTimeOff;
 
     String labels = null; //Retrieved one time per session during the first pull
 
@@ -66,7 +72,9 @@ public class MainActivity extends AppCompatActivity {
     //list of allNames added
     ArrayList<String> allNames = new ArrayList<>();
     //the names that have been checked off
-    ArrayList<String> selectedNames = new ArrayList<>();
+    ArrayList<Scout> selectedNames = new ArrayList<>();
+    //for each selected name, there is an array of assigned robots (0 - 5 per match, -1 being a break)
+    ArrayList<int[]> assignedRobot = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,12 +104,23 @@ public class MainActivity extends AppCompatActivity {
         });
 
         status = ((TextView) findViewById(R.id.status));
-        versionNumTextView = ((TextView) findViewById(R.id.versionNum));
-        versionNumButton = ((Button) findViewById(R.id.setVersionNumber));
-        versionNumButton.setOnClickListener(new View.OnClickListener() {
+        versionNumEditText = ((EditText) findViewById(R.id.versionNum));
+        versionNumEditText.addTextChangedListener(new TextWatcher() {
             @Override
-            public void onClick(View v) {
-                minVersionNum = Integer.parseInt(versionNumTextView.getText().toString());
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                if (versionNumEditText.getText().toString().equals("")) return;
+
+                minVersionNum = Integer.parseInt(versionNumEditText.getText().toString());
 
                 SharedPreferences sharedPreferences = getSharedPreferences("minVersionNum", MODE_PRIVATE);
                 SharedPreferences.Editor editor = sharedPreferences.edit();
@@ -111,7 +130,79 @@ public class MainActivity extends AppCompatActivity {
         });
         SharedPreferences sharedPreferences = getSharedPreferences("minVersionNum", MODE_PRIVATE);
         minVersionNum = sharedPreferences.getInt("minVersionNum", 0);
-        versionNumTextView.setText(minVersionNum + "");
+        versionNumEditText.setText(minVersionNum + "");
+
+        //load schedule into memory
+        try {
+            readSchedule();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        //load schedule when button is pressed.
+        findViewById(R.id.reloadSchedule).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try {
+                    readSchedule();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        //setup time off text view
+        timeOffEditText = ((EditText) findViewById(R.id.timeOff));
+        timeOffMatchNumEditText = ((EditText) findViewById(R.id.timeOffMatchNum));
+        timeOffSet = ((Button) findViewById(R.id.timeOffSetButton));
+        timeOffSet.setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                if (timeOffEditText.getText().toString().equals("")) return;
+                if (timeOffMatchNumEditText.getText().toString().equals("")){
+                    runOnUiThread(new Thread(){
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "You need to specify a match number for this to happen at (can be 1)", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    return;
+                }
+
+                int newTimeOff = Integer.parseInt(timeOffEditText.getText().toString());
+                int switchMatch = Integer.parseInt(timeOffMatchNumEditText.getText().toString()) - 1;
+
+                targetTimeOff.targetTimeOff.add(newTimeOff);
+                targetTimeOff.switchMatches.add(switchMatch);
+
+                SharedPreferences sharedPreferences = getSharedPreferences("targetTimeOff", MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putInt("targetTimeOff" + (targetTimeOff.targetTimeOff.size() - 1), newTimeOff);
+                editor.putInt("switchMatches" + (targetTimeOff.switchMatches.size() - 1), switchMatch);
+                editor.putInt("targetTimeOffSize" + (targetTimeOff.targetTimeOff.size()), targetTimeOff.targetTimeOff.size());
+                editor.putInt("switchMatchesSize" + (targetTimeOff.switchMatches.size()), targetTimeOff.switchMatches.size());
+                editor.apply();
+
+                runOnUiThread(new Thread(){
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "Added new time off", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+        sharedPreferences = getSharedPreferences("targetTimeOff", MODE_PRIVATE);
+        targetTimeOff = new TimeOff();
+        int targetTimeOffSize = sharedPreferences.getInt("targetTimeOffSize", 1);
+        for (int i = 0; i < targetTimeOffSize; i++) {
+            targetTimeOff.targetTimeOff.add(sharedPreferences.getInt("targetTimeOff" + i, 2));
+        }
+        int switchMatchesSize = sharedPreferences.getInt("switchMatchesSize", 1);
+        for (int i = 0; i < switchMatchesSize; i++) {
+            targetTimeOff.switchMatches.add(sharedPreferences.getInt("switchMatches" + i, 0));
+        }
+
+        //set text view to current target time off
+        timeOffEditText.setText(targetTimeOff.getTimeOff(robotSchedule.size() - 1) + "");
 
         //add click listener for pull all
         findViewById(R.id.pullAll).setOnClickListener(new View.OnClickListener() {
@@ -143,34 +234,72 @@ public class MainActivity extends AppCompatActivity {
             uuids.add(getUUIDFromData(line));
         }
 
-        //load schedule into memory
-        try {
-            readSchedule();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        //load schedule when button is pressed.
-        findViewById(R.id.reloadSchedule).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                try {
-                    readSchedule();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
-
         //load names
         SharedPreferences namesPreferences = getSharedPreferences("names", MODE_PRIVATE);
         String allNamesText = namesPreferences.getString("allNames", "");
         if (!allNamesText.equals("")) {
             allNames = new ArrayList<>(Arrays.asList(allNamesText.split(",")));
         }
+
         String selectedNamesText = namesPreferences.getString("selectedNames", "");
         if (!selectedNamesText.equals("")) {
-            selectedNames = new ArrayList<>(Arrays.asList(selectedNamesText.split(",")));
+            String[] selectedNamesArray = selectedNamesText.split(",");
+
+            for (int i = 0; i < selectedNamesArray.length; i++) {
+                Scout scout = new Scout(selectedNamesArray[i]);
+                selectedNames.add(scout);
+            }
+        }
+
+        String selectedNameStartMatchesText = namesPreferences.getString("selectedNameStartMatches", "");
+        if (!selectedNameStartMatchesText.equals("")) {
+            String[] selectedNameStartMatchesArray = selectedNameStartMatchesText.split(",");
+
+            for (int i = 0; i < selectedNameStartMatchesArray.length; i++) {
+                //add all start matches
+                String[] scoutStartMatchesArray = selectedNameStartMatchesArray[i].split(";");
+                for (int s = 0; s < scoutStartMatchesArray.length; s++) {
+                    selectedNames.get(i).startMatches.add(Integer.parseInt(scoutStartMatchesArray[s]));
+                }
+            }
+        }
+
+        String selectedNameLastMatchesText = namesPreferences.getString("selectedNameLastMatches", "");
+        if (!selectedNameLastMatchesText.equals("")) {
+            String[] selectedNameLastMatchesArray = selectedNameLastMatchesText.split(",");
+
+            for (int i = 0; i < selectedNameLastMatchesArray.length; i++) {
+                if (!selectedNameLastMatchesArray[i].equals("")) {
+                    //add all last matches
+                    String[] scoutLastMatchesArray = selectedNameLastMatchesArray[i].split(";");
+                    for (int s = 0; s < scoutLastMatchesArray.length; s++) {
+                        selectedNames.get(i).lastMatches.add(Integer.parseInt(scoutLastMatchesArray[s]));
+                    }
+                }
+            }
+        }
+
+        //load devices
+        SharedPreferences devicesPreferences = getSharedPreferences("devices", MODE_PRIVATE);
+        String deviceText = devicesPreferences.getString("selectedDevices", "");
+        if (!deviceText.equals("")) {
+            String[] deviceArray = deviceText.split(",");
+
+            for (int i = 0; i < deviceArray.length; i++) {
+                BluetoothDevice bluetoothDevice = bluetoothAdapter.getRemoteDevice(deviceArray[i]);
+
+                addSelectedDevice(bluetoothDevice);
+            }
+        }
+
+        //create the schedule out of the currently selected names
+        final String success = createSchedule();
+        if (success != null) {
+            runOnUiThread(new Thread(){
+                public void run() {
+                    Toast.makeText(MainActivity.this, success, Toast.LENGTH_SHORT).show();
+                }
+            });
         }
     }
 
@@ -196,15 +325,33 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 SparseBooleanArray checked = ((AlertDialog) dialog).getListView().getCheckedItemPositions();
+
                 for (int i = 0; i < ((AlertDialog) dialog).getListView().getCount(); i++) {
                     if(checked.get(i)) {
                         addSelectedDevice(devices[i]);
                     }
                 }
 
+                //convert all devices into a csv of addresses
+                String devicesString = "";
+
+                for (int i = 0; i < devicesSelected.size(); i++){
+                    //add it to the list
+                    devicesString += devicesSelected.get(i).getAddress();
+                    if (i != devicesSelected.size() - 1){
+                        devicesString += ",";
+                    }
+                }
+
+                //save this data in shared preferences
+                SharedPreferences sharedPreferences = getSharedPreferences("devices", MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("selectedDevices", devicesString);
+                editor.apply();
+
                 runOnUiThread(new Thread(){
                     public void run(){
-                        Toast.makeText(MainActivity.this, "Added to list", Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, "Updated list", Toast.LENGTH_LONG).show();
                     }
                 });
             }
@@ -238,6 +385,24 @@ public class MainActivity extends AppCompatActivity {
                 linearLayout.removeView(newDeviceMenu);
 
                 devicesSelected.remove(device);
+
+                //update the shared preferences with the new list of devices
+                //convert all devices into a csv of addresses
+                String devicesString = "";
+
+                for (int i = 0; i < devicesSelected.size(); i++){
+                    //add it to the list
+                    devicesString += devicesSelected.get(i).getAddress();
+                    if (i != devicesSelected.size() - 1){
+                        devicesString += ",";
+                    }
+                }
+
+                //save this data in shared preferences
+                SharedPreferences sharedPreferences = getSharedPreferences("devices", MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("selectedDevices", devicesString);
+                editor.apply();
 
                 runOnUiThread(new Thread(){
                     public void run(){
@@ -301,8 +466,185 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    //creates the schedule based on the selected usernames
+    //returns null if successful, and error message if not
+    public String createSchedule() {
+        if (selectedNames.size() < 6) {
+            return "You must select at least 6 scouts";
+        }
+
+        //scouts currently scouting or not
+        Scout[] scoutsOn = new Scout[6];
+        ArrayList<Scout> scoutsOff = new ArrayList<>();
+
+        //set assigned robots to correct size
+        assignedRobot = new ArrayList<>();
+        for (int i = 0; i < selectedNames.size(); i++) {
+            assignedRobot.add(new int[robotSchedule.size()]);
+        }
+
+        //reset assigned robots
+        for (int i = 0; i < assignedRobot.size(); i++) {
+            for (int s = 0; s < assignedRobot.get(i).length; s++) {
+                assignedRobot.get(i)[s] = -1;
+            }
+        }
+
+        //used to determine if there are not enough ready scouts
+        int nonReadyScouts = 0;
+        for (int i = 0; i < scoutsOn.length; i++) {
+            if (scoutsOn.length - nonReadyScouts < 6) {
+                //not enough scouts
+                return "You must select at least 6 ready scouts";
+            }
+
+            //if they are not starting on the first match
+            if (selectedNames.get(i).getLowestStartMatch() > 0) {
+                Scout scout = selectedNames.get(i);
+                selectedNames.remove(scout);
+                selectedNames.add(scout);
+                //try again
+                i--;
+                //add to the non ready scouts to make sure this is not an infinite loop
+                nonReadyScouts++;
+                continue;
+            }
+
+            scoutsOn[i] = new Scout(i, selectedNames.get(i).name);
+        }
+
+        for (int i = 6; i < selectedNames.size(); i++) {
+            //if they are not starting on the first match
+            if (selectedNames.get(i).getLowestStartMatch() > 0) {
+                continue;
+            }
+
+            Scout scout = new Scout(i, selectedNames.get(i).name);
+            scoutsOff.add(scout);
+            scout.timeOff = 0;
+        }
+
+        for (int matchNum = 0; matchNum < robotSchedule.size(); matchNum++) {
+            //figure out if some selected names should be added or removed because it is now their start match or last match
+            for (int i = 0; i < selectedNames.size(); i++) {
+                //if it is time to add this scout to the roster and they are not already added
+                Scout scout = selectedNames.get(i);
+                boolean existsAtMatch = scout.existsAtMatch(matchNum);
+                if (existsAtMatch && getScout(i, scoutsOff) == -1 && getScout(i, scoutsOn) == -1) {
+                    Scout newScout = new Scout(i, scout.name);
+                    scoutsOff.add(newScout);
+                    newScout.timeOff = 0;
+                } else if (!existsAtMatch && (getScout(i, scoutsOff) != -1 || getScout(i, scoutsOn) != -1)) {
+                    int index = getScout(i, scoutsOff);
+                    if (index == -1){
+                        index = getScout(i, scoutsOn);
+
+                        //check if there this scout can switch off
+                        boolean canSwitchOff = false;
+                        for (int s = 0; s < scoutsOff.size(); s++) {
+                            if (matchNum - scoutsOff.get(s).timeOff >= targetTimeOff.getTimeOff(matchNum)) {
+                                canSwitchOff = true;
+                                break;
+                            }
+                        }
+
+                        if (!canSwitchOff) {
+                            return "Nobody is ready to switch off this match, try next match.";
+                        }
+
+                        //make sure this scout goes off next
+                        scoutsOn[index].timeOn = -targetTimeOff.getTimeOff(matchNum);
+                    } else {
+                        scoutsOff.remove(index);
+                    }
+                }
+            }
+
+            //calculate the schedule for this match
+            //find scouts to switch on (the scouts that have been off >= targetTimeOff)
+            ArrayList<Scout> scoutsToSwitchOn = new ArrayList<>();
+            for (int i = 0; i < scoutsOff.size(); i++) {
+                if (matchNum - scoutsOff.get(i).timeOff >= targetTimeOff.getTimeOff(matchNum) && scoutsToSwitchOn.size() < 6) {
+                    scoutsToSwitchOn.add(scoutsOff.get(i));
+                }
+            }
+
+            //find scouts to switch off (scouts with the highest time)
+            ArrayList<Scout> scoutsToSwitchOff = new ArrayList<>();
+            //sort by time on
+            for (int i = 0; i < scoutsOn.length; i++) {
+                //the index to add this scout when sorted
+                int indexToAdd = scoutsToSwitchOff.size();
+                for (int s = 0; s < scoutsToSwitchOff.size(); s++) {
+                    if (matchNum - scoutsOn[i].timeOn > matchNum - scoutsToSwitchOff.get(s).timeOn) {
+                        indexToAdd = s;
+                        break;
+                    }
+                }
+
+                //add at index
+                scoutsToSwitchOff.add(indexToAdd, scoutsOn[i]);
+            }
+
+            //swap scouts on with scouts off
+            for (int i = 0; i < scoutsToSwitchOn.size(); i++) {
+                //scout switching on and off
+                Scout switchingOn = scoutsToSwitchOn.get(i);
+                Scout switchingOff = scoutsToSwitchOff.get(i);
+
+                scoutsOn[getScout(switchingOff.id, scoutsOn)] = switchingOn;
+
+                scoutsOff.remove(switchingOn);
+                scoutsOff.add(switchingOff);
+
+                //update targetTimeOff and timeOn
+                switchingOn.timeOn = matchNum;
+                switchingOff.timeOff = matchNum;
+            }
+
+            //set the schedule for this match
+            for (int i = 0; i < scoutsOn.length; i++) {
+                assignedRobot.get(scoutsOn[i].id)[matchNum] = i;
+            }
+            for (int i = 0; i < scoutsOff.size(); i++) {
+                assignedRobot.get(scoutsOff.get(i).id)[matchNum] = -1;
+            }
+        }
+
+        return null;
+    }
+
+    public int getScout(int id, ArrayList<Scout> scouts) {
+        for (int i = 0; i < scouts.size(); i++) {
+            if (scouts.get(i).id == id) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public int getScout(int id, Scout[] scouts) {
+        for (int i = 0; i < scouts.length; i++) {
+            if (scouts[i].id == id) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public int getScout(String name, ArrayList<Scout> scouts) {
+        for (int i = 0; i < scouts.size(); i++) {
+            if (scouts.get(i).name.equals(name)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     //dialog box that lets you edit and deselect names
     public void openNameEditor() {
+
+        final ScrollView fullScrollView = new ScrollView(this);
 
         //contains all the names plus the view to add more
         final LinearLayout fullView = new LinearLayout(this);
@@ -311,6 +653,11 @@ public class MainActivity extends AppCompatActivity {
         //all the names already in the list
         final LinearLayout createdNames = new LinearLayout(this);
         createdNames.setOrientation(LinearLayout.VERTICAL);
+
+        //create view to add a new name
+        final View addName = View.inflate(this, R.layout.name_submitter, null);
+        //get match number view
+        final TextView currentMatchNumber = ((TextView) addName.findViewById(R.id.currentMatchNumber));
 
         //add checkbox and close button for each username
         for (int i = 0; i < allNames.size(); i++) {
@@ -323,7 +670,8 @@ public class MainActivity extends AppCompatActivity {
             checkBox.setText(name);
 
             //if it is selected, check the box
-            if (selectedNames.contains(name)) {
+            int index = getScout(name, selectedNames);
+            if (index != -1 && selectedNames.get(index).existsAtMatch(robotSchedule.size() - 1)) {
                 checkBox.setChecked(true);
             }
 
@@ -331,30 +679,7 @@ public class MainActivity extends AppCompatActivity {
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
-
-                    if (isChecked) {
-                        if (!selectedNames.contains(name)) {
-                            selectedNames.add(name);
-                        }
-                    } else {
-                        if (selectedNames.contains(name)) {
-                            selectedNames.remove(name);
-                        }
-                    }
-
-                    //get all the names in csv
-                    String names = "";
-                    for (String name : selectedNames) {
-                        names += name;
-                        if (selectedNames.indexOf(name) < selectedNames.size() - 1) {
-                            names += ",";
-                        }
-                    }
-
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString("selectedNames", names);
-                    editor.apply();
+                    nameClicked(buttonView, isChecked, name, currentMatchNumber);
                 }
             });
 
@@ -365,21 +690,11 @@ public class MainActivity extends AppCompatActivity {
                 public void onClick(View v) {
                     createdNames.removeView(view);
                     allNames.remove(name);
-
-                    SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
-
-                    //get all the names in csv
-                    String names = "";
-                    for (String name : allNames) {
-                        names += name;
-                        if (allNames.indexOf(name) < allNames.size() - 1) {
-                            names += ",";
-                        }
+                    if (getScout(name, selectedNames) != -1) {
+                        selectedNames.remove(getScout(name, selectedNames));
                     }
 
-                    SharedPreferences.Editor editor = sharedPreferences.edit();
-                    editor.putString("allNames", names);
-                    editor.apply();
+                    updateNames();
                 }
             });
 
@@ -387,9 +702,6 @@ public class MainActivity extends AppCompatActivity {
         }
 
         fullView.addView(createdNames);
-
-        //create view to add a new name
-        final View addName = View.inflate(this, R.layout.name_submitter, null);
 
         //set add name action
         addName.findViewById(R.id.nameAddButton).setOnClickListener(new View.OnClickListener() {
@@ -405,7 +717,7 @@ public class MainActivity extends AppCompatActivity {
                 //add it to the list
                 allNames.add(name);
 
-                updateAllNames();
+                updateNames();
 
                 //add it to the UI
                 final View view = View.inflate(MainActivity.this, R.layout.closable_checkbox, null);
@@ -418,17 +730,7 @@ public class MainActivity extends AppCompatActivity {
                 checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                     @Override
                     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                        if (isChecked) {
-                            if (!selectedNames.contains(name)) {
-                                selectedNames.add(name);
-                            }
-                        } else {
-                            if (selectedNames.contains(name)) {
-                                selectedNames.remove(name);
-                            }
-                        }
-
-                        updateSelectedNames();
+                        nameClicked(buttonView, isChecked, name, currentMatchNumber);
                     }
                 });
 
@@ -438,8 +740,11 @@ public class MainActivity extends AppCompatActivity {
                     public void onClick(View v) {
                         createdNames.removeView(view);
                         allNames.remove(name);
+                        if (getScout(name, selectedNames) != -1) {
+                            selectedNames.remove(getScout(name, selectedNames));
+                        }
 
-                        updateAllNames();
+                        updateNames();
                     }
                 });
 
@@ -449,16 +754,78 @@ public class MainActivity extends AppCompatActivity {
 
         fullView.addView(addName);
 
+        fullScrollView.addView(fullView);
+
         //create the dialog box
         new AlertDialog.Builder(MainActivity.this)
                 .setTitle("Select Names")
-                .setView(fullView)
+                .setView(fullScrollView)
                 .setPositiveButton("Ok", null)
                 .show();
     }
 
-    //updates the shared preferences with the all names list
-    public void updateAllNames() {
+    //called when a name is checked or unchecked
+    public void nameClicked(CompoundButton checkbox, boolean isChecked, String name, TextView currentMatchNumber) {
+        int scoutIndex = getScout(name, selectedNames);
+        int matchNum = Integer.parseInt(currentMatchNumber.getText().toString()) - 1;
+
+        if (isChecked) {
+            if (scoutIndex == -1) {
+                selectedNames.add(new Scout(name, matchNum));
+            } else {
+                Scout scout = selectedNames.get(scoutIndex);
+
+                if (scout.existsAtMatch(matchNum)) {
+                    //this action should not happen, this is an invalid time
+                    runOnUiThread(new Thread() {
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "This scout is already enabled at that match", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    checkbox.setChecked(false);
+                    return;
+                }
+
+                //enable them at that match number
+                scout.startMatches.add(matchNum);
+            }
+        } else {
+            if (scoutIndex != -1) {
+                Scout scout = selectedNames.get(scoutIndex);
+
+                if (!scout.existsAtMatch(matchNum)) {
+                    //this action should not happen, this is an invalid time
+                    runOnUiThread(new Thread() {
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "The scout is not enabled at that match", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    checkbox.setChecked(true);
+                    return;
+                }
+
+                scout.lastMatches.add(matchNum);
+
+                //check if there were errors from this change
+                final String success = createSchedule();
+                if (success != null) {
+                    runOnUiThread(new Thread(){
+                        public void run() {
+                            Toast.makeText(MainActivity.this, success, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    //undo as an error has been caused
+                    scout.lastMatches.remove(scout.lastMatches.size() - 1);
+                    checkbox.setChecked(true);
+                }
+            }
+        }
+
+        updateNames();
+    }
+
+    //updates the shared preferences with the all names and selected names list
+    public void updateNames() {
         SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
 
         //get all the names in csv
@@ -472,25 +839,49 @@ public class MainActivity extends AppCompatActivity {
 
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("allNames", names);
-        editor.apply();
-    }
 
-    //updates the shared preferences with the selected names list
-    public void updateSelectedNames() {
-        SharedPreferences sharedPreferences = getSharedPreferences("names", MODE_PRIVATE);
+        //get all the selected names in csv
+        String allSelectedNames = "";
+        String allSelectedNameStartMatches = "";
+        String allSelectedNameLastMatches = "";
+        for (Scout scout : selectedNames) {
+            allSelectedNames += scout.name;
+            for (int i = 0; i < scout.startMatches.size(); i++) {
+                allSelectedNameStartMatches += scout.startMatches.get(i);
+                if (i < scout.startMatches.size() - 1) {
+                    allSelectedNameStartMatches += ";";
+                }
+            }
+            for (int i = 0; i < scout.lastMatches.size(); i++) {
+                allSelectedNameLastMatches += scout.lastMatches.get(i);
+                if (i < scout.lastMatches.size() - 1) {
+                    allSelectedNameLastMatches += ";";
+                }
+            }
 
-        //get all the names in csv
-        String names = "";
-        for (String name : selectedNames) {
-            names += name;
-            if (selectedNames.indexOf(name) < selectedNames.size() - 1) {
-                names += ",";
+            if (selectedNames.indexOf(scout) < selectedNames.size() - 1) {
+                allSelectedNames += ",";
+                allSelectedNameStartMatches += ",";
+                allSelectedNameLastMatches += ",";
             }
         }
+        editor.putString("selectedNames", allSelectedNames);
+        editor.putString("selectedNameStartMatches", allSelectedNameStartMatches);
+        editor.putString("selectedNameLastMatches", allSelectedNameLastMatches);
 
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("selectedNames", names);
+
         editor.apply();
+
+
+        //update schedule
+        final String success = createSchedule();
+        if (success != null) {
+            runOnUiThread(new Thread(){
+                public void run() {
+                    Toast.makeText(MainActivity.this, success, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
     }
 
     @Override

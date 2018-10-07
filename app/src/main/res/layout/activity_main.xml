@@ -66,7 +66,7 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/versionNum"
+        android:layout_above="@+id/versionNumTexts"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         android:id="@+id/bottomButtons">
@@ -85,23 +85,80 @@
 
     </LinearLayout>
 
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:inputType="number"
-        android:ems="10"
-        android:id="@+id/versionNum"
-        android:layout_above="@+id/setVersionNumber"
-        android:layout_centerHorizontal="true" />
 
-    <Button
-        style="?android:attr/buttonStyleSmall"
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Set Version Number"
-        android:id="@+id/setVersionNumber"
+        android:layout_above="@+id/timeOffTexts"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/versionNumTexts">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Minimum Version Number: "
+            android:id="@+id/versionNumText"/>
+
+        <EditText
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:ems="10"
+            android:id="@+id/versionNum"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/timeOffMatchNumTexts"
+        android:layout_centerHorizontal="true"
+        android:id="@+id/timeOffTexts">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Time Off: "
+            android:id="@+id/timeOffText"/>
+
+        <EditText
+            android:layout_width="84dp"
+            android:layout_height="wrap_content"
+            android:inputType="number"
+            android:ems="10"
+            android:id="@+id/timeOff"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true" />
+        android:layout_centerHorizontal="true"
+        android:id="@+id/timeOffMatchNumTexts">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Match Num: "
+            android:id="@+id/timeOffMatchNumText"/>
+
+        <EditText
+            android:id="@+id/timeOffMatchNum"
+            android:layout_width="84dp"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="number" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/timeOffSetButton"
+            android:layout_marginLeft="10dp"
+            android:text="Set"/>
+
+
+    </LinearLayout>
 
 </RelativeLayout>
