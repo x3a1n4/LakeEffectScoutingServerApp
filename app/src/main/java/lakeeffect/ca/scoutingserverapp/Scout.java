@@ -58,7 +58,7 @@ public class Scout {
         for (int i = 0; i < startMatches.size(); i++) {
             if (startMatches.get(i) <= matchNum) {
                 //has it been closed since then
-                if (lastMatches.size() <= i || lastMatches.get(i) >= matchNum) {
+                if (lastMatches.size() <= i || lastMatches.get(i) > matchNum) {
                     return true;
                 }
             }

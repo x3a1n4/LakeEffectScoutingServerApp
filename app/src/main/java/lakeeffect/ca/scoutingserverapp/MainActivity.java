@@ -740,7 +740,7 @@ public class MainActivity extends AppCompatActivity {
     //called when a name is checked or unchecked
     public void nameClicked(CompoundButton checkbox, boolean isChecked, String name, TextView currentMatchNumber) {
         int scoutIndex = getScout(name, selectedNames);
-        int matchNum = Integer.parseInt(currentMatchNumber.getText().toString());
+        int matchNum = Integer.parseInt(currentMatchNumber.getText().toString()) - 1;
 
         if (isChecked) {
             if (scoutIndex == -1) {
