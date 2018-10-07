@@ -644,7 +644,8 @@ public class MainActivity extends AppCompatActivity {
             checkBox.setText(name);
 
             //if it is selected, check the box
-            if (getScout(name, selectedNames) != -1) {
+            int index = getScout(name, selectedNames);
+            if (index != -1 && selectedNames.get(index).existsAtMatch(robotSchedule.size() - 1)) {
                 checkBox.setChecked(true);
             }
 
