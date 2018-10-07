@@ -873,7 +873,7 @@ public class MainActivity extends AppCompatActivity {
         editor.apply();
 
 
-        //for testing purposes TODO REMOVE
+        //update schedule
         final String success = createSchedule();
         if (success != null) {
             runOnUiThread(new Thread(){
@@ -882,15 +882,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
-
-        String message = "";
-        for (int[] robots : assignedRobot){
-            for (int robotNumber : robots) {
-                message += robotNumber + ",";
-            }
-            message += "DONE\n";
-        }
-        System.out.println(message + "DONEEEE");
     }
 
     @Override
