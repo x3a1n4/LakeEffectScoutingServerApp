@@ -457,6 +457,13 @@ public class MainActivity extends AppCompatActivity {
             assignedRobot.add(new int[robotSchedule.size()]);
         }
 
+        //reset assigned robots
+        for (int i = 0; i < assignedRobot.size(); i++) {
+            for (int s = 0; s < assignedRobot.get(i).length; s++) {
+                assignedRobot.get(i)[s] = -1;
+            }
+        }
+
         //used to determine if there are not enough ready scouts
         int nonReadyScouts = 0;
         for (int i = 0; i < scoutsOn.length; i++) {
@@ -501,11 +508,6 @@ public class MainActivity extends AppCompatActivity {
                     Scout newScout = new Scout(i, scout.name);
                     scoutsOff.add(newScout);
                     newScout.timeOff = 0;
-
-                    //set this scout to off before this
-                    for (int s = 0; s < matchNum; s++) {
-                        assignedRobot.get(newScout.id)[s] = -1;
-                    }
                 } else if (!existsAtMatch && (getScout(i, scoutsOff) != -1 || getScout(i, scoutsOn) != -1)) {
                     int index = getScout(i, scoutsOff);
                     if (index == -1){
@@ -528,11 +530,6 @@ public class MainActivity extends AppCompatActivity {
                         scoutsOn[index].timeOn = -targetTimeOff;
                     } else {
                         scoutsOff.remove(index);
-                    }
-
-                    //set this scout to off all matches after this
-                    for (int s = matchNum; s < assignedRobot.get(i).length; s++) {
-                        assignedRobot.get(i)[s] = -1;
                     }
                 }
             }
