@@ -37,6 +37,10 @@ public class Scout {
         startMatches.add(startMatch - 1);
     }
 
+    public Scout(String name) {
+        this.name = name;
+    }
+
     //gets lowest start match
     public int getLowestStartMatch() {
         int lowestStartMatch = -1;

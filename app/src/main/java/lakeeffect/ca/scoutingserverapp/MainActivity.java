@@ -214,15 +214,42 @@ public class MainActivity extends AppCompatActivity {
         if (!allNamesText.equals("")) {
             allNames = new ArrayList<>(Arrays.asList(allNamesText.split(",")));
         }
+
         String selectedNamesText = namesPreferences.getString("selectedNames", "");
-        String selectedNameStartMatchesText = namesPreferences.getString("selectedNameStartMatches", "");
         if (!selectedNamesText.equals("")) {
             String[] selectedNamesArray = selectedNamesText.split(",");
-            String[] selectedNameStartMatchesArray = selectedNameStartMatchesText.split(",");
 
             for (int i = 0; i < selectedNamesArray.length; i++) {
-                //plus one because in the UI, match 1 is really match zero. This is in UI matches
-                selectedNames.add(new Scout(selectedNamesArray[i], Integer.parseInt(selectedNameStartMatchesArray[i]) + 1));
+                Scout scout = new Scout(selectedNamesArray[i]);
+                selectedNames.add(scout);
+            }
+        }
+
+        String selectedNameStartMatchesText = namesPreferences.getString("selectedNameStartMatches", "");
+        if (!selectedNameStartMatchesText.equals("")) {
+            String[] selectedNameStartMatchesArray = selectedNameStartMatchesText.split(",");
+
+            for (int i = 0; i < selectedNameStartMatchesArray.length; i++) {
+                //add all start matches
+                String[] scoutStartMatchesArray = selectedNameStartMatchesArray[i].split(";");
+                for (int s = 0; s < scoutStartMatchesArray.length; s++) {
+                    selectedNames.get(i).startMatches.add(Integer.parseInt(scoutStartMatchesArray[s]));
+                }
+            }
+        }
+
+        String selectedNameLastMatchesText = namesPreferences.getString("selectedNameLastMatches", "");
+        if (!selectedNameLastMatchesText.equals("")) {
+            String[] selectedNameLastMatchesArray = selectedNameLastMatchesText.split(",");
+
+            for (int i = 0; i < selectedNameLastMatchesArray.length; i++) {
+                if (!selectedNameLastMatchesArray[i].equals("")) {
+                    //add all last matches
+                    String[] scoutLastMatchesArray = selectedNameLastMatchesArray[i].split(";");
+                    for (int s = 0; s < scoutLastMatchesArray.length; s++) {
+                        selectedNames.get(i).lastMatches.add(Integer.parseInt(scoutLastMatchesArray[s]));
+                    }
+                }
             }
         }
 
@@ -487,17 +514,19 @@ public class MainActivity extends AppCompatActivity {
                         //check if there this scout can switch off
                         boolean canSwitchOff = false;
                         for (int s = 0; s < scoutsOff.size(); s++) {
+                            System.out.println(scoutsOff.get(s).timeOff + " : " + matchNum);
                             if (matchNum - scoutsOff.get(s).timeOff >= targetTimeOff) {
                                 canSwitchOff = true;
                                 break;
                             }
                         }
+//                        System.out.println(scoutsOff.size() + " : " + matchNum);
 
                         if (!canSwitchOff) {
                             return "Nobody is ready to switch off this match, try next match.";
                         }
 
-                        scout.timeOn = Integer.MAX_VALUE;
+                        scoutsOn[index].timeOn = Integer.MAX_VALUE;
                     } else {
                         scoutsOff.remove(index);
                     }
@@ -791,16 +820,31 @@ public class MainActivity extends AppCompatActivity {
         //get all the selected names in csv
         String allSelectedNames = "";
         String allSelectedNameStartMatches = "";
+        String allSelectedNameLastMatches = "";
         for (Scout scout : selectedNames) {
             allSelectedNames += scout.name;
-            allSelectedNameStartMatches += scout.startMatches.get(0);
+            for (int i = 0; i < scout.startMatches.size(); i++) {
+                allSelectedNameStartMatches += scout.startMatches.get(i);
+                if (i < scout.startMatches.size() - 1) {
+                    allSelectedNameStartMatches += ";";
+                }
+            }
+            for (int i = 0; i < scout.lastMatches.size(); i++) {
+                allSelectedNameLastMatches += scout.lastMatches.get(i);
+                if (i < scout.lastMatches.size() - 1) {
+                    allSelectedNameLastMatches += ";";
+                }
+            }
+
             if (selectedNames.indexOf(scout) < selectedNames.size() - 1) {
                 allSelectedNames += ",";
                 allSelectedNameStartMatches += ",";
+                allSelectedNameLastMatches += ",";
             }
         }
         editor.putString("selectedNames", allSelectedNames);
         editor.putString("selectedNameStartMatches", allSelectedNameStartMatches);
+        editor.putString("selectedNameLastMatches", allSelectedNameLastMatches);
 
 
         editor.apply();
