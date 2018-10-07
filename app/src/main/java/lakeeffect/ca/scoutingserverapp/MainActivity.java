@@ -514,19 +514,18 @@ public class MainActivity extends AppCompatActivity {
                         //check if there this scout can switch off
                         boolean canSwitchOff = false;
                         for (int s = 0; s < scoutsOff.size(); s++) {
-                            System.out.println(scoutsOff.get(s).timeOff + " : " + matchNum);
                             if (matchNum - scoutsOff.get(s).timeOff >= targetTimeOff) {
                                 canSwitchOff = true;
                                 break;
                             }
                         }
-//                        System.out.println(scoutsOff.size() + " : " + matchNum);
 
                         if (!canSwitchOff) {
                             return "Nobody is ready to switch off this match, try next match.";
                         }
 
-                        scoutsOn[index].timeOn = Integer.MAX_VALUE;
+                        //make sure this scout goes off next
+                        scoutsOn[index].timeOn = -targetTimeOff;
                     } else {
                         scoutsOff.remove(index);
                     }
@@ -791,7 +790,7 @@ public class MainActivity extends AppCompatActivity {
                             Toast.makeText(MainActivity.this, success, Toast.LENGTH_SHORT).show();
                         }
                     });
-                    //undo
+                    //undo as an error has been caused
                     scout.lastMatches.remove(scout.lastMatches.size() - 1);
                     checkbox.setChecked(true);
                 }
