@@ -76,6 +76,7 @@ public class MainActivity extends AppCompatActivity {
 
     //the last actions that have happened, used to undo actions is necessary
     ArrayList<Action> pastActions = new ArrayList<>();
+    final int PAST_ACTIONS_MAX = 25;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -690,6 +691,10 @@ public class MainActivity extends AppCompatActivity {
                     //add the action to the past actions list
                     pastActions.add(new Action(3, scout, view));
 
+                    if (pastActions.size() > PAST_ACTIONS_MAX) {
+                        pastActions.remove(0);
+                    }
+
                     updateNames();
                 }
             });
@@ -721,6 +726,9 @@ public class MainActivity extends AppCompatActivity {
 
                 //add the action to the past actions list
                 pastActions.add(new Action(2, scout, view));
+                if (pastActions.size() > PAST_ACTIONS_MAX) {
+                    pastActions.remove(0);
+                }
 
                 CheckBox checkBox = ((CheckBox) view.findViewById(R.id.nameCheckBox));
 
@@ -744,6 +752,9 @@ public class MainActivity extends AppCompatActivity {
                         //a scout was removed
                         //add the action to the past actions list
                         pastActions.add(new Action(3, scout, view));
+                        if (pastActions.size() > PAST_ACTIONS_MAX) {
+                            pastActions.remove(0);
+                        }
 
                         updateNames();
                     }
@@ -846,6 +857,9 @@ public class MainActivity extends AppCompatActivity {
 
                 //add the action to the past actions list
                 pastActions.add(new Action(0, scout, checkbox));
+                if (pastActions.size() > PAST_ACTIONS_MAX) {
+                    pastActions.remove(0);
+                }
             }
         } else {
             if (scoutIndex != -1) {
@@ -880,6 +894,10 @@ public class MainActivity extends AppCompatActivity {
 
                     //add the action to the past actions list
                     pastActions.add(new Action(1, scout, checkbox));
+
+                    if (pastActions.size() > PAST_ACTIONS_MAX) {
+                        pastActions.remove(0);
+                    }
                 }
             }
         }
