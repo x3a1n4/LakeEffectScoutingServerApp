@@ -466,7 +466,7 @@ public class MainActivity extends AppCompatActivity {
     //creates the schedule based on the selected usernames
     //returns null if successful, and error message if not
     public String createSchedule() {
-        if (allScouts.size() < 6) {
+        if (getSelectedAmount() < 6) {
             return "You must select at least 6 scouts";
         }
 
@@ -636,6 +636,17 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return -1;
+    }
+
+    public int getSelectedAmount() {
+        int selectedAmount = 0;
+        for (Scout scout : allScouts) {
+            if (scout.startMatches.size() > 0) {
+                selectedAmount++;
+            }
+        }
+
+        return selectedAmount;
     }
 
     //dialog box that lets you edit and deselect names
