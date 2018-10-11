@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Set;
 
@@ -72,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     //the list of all scouts
     ArrayList<Scout> allScouts = new ArrayList<>();
     //for each selected name, there is an array of assigned robots (0 - 5 per match, -1 being a break)
-    ArrayList<int[]> assignedRobot = new ArrayList<>();
+    ArrayList<int[]> assignedRobots = new ArrayList<>();
 
     //the last actions that have happened, used to undo actions is necessary
     ArrayList<Action> pastActions = new ArrayList<>();
@@ -475,15 +474,15 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<Scout> scoutsOff = new ArrayList<>();
 
         //set assigned robots to correct size
-        assignedRobot = new ArrayList<>();
+        assignedRobots = new ArrayList<>();
         for (int i = 0; i < allScouts.size(); i++) {
-            assignedRobot.add(new int[robotSchedule.size()]);
+            assignedRobots.add(new int[robotSchedule.size()]);
         }
 
         //reset assigned robots
-        for (int i = 0; i < assignedRobot.size(); i++) {
-            for (int s = 0; s < assignedRobot.get(i).length; s++) {
-                assignedRobot.get(i)[s] = -1;
+        for (int i = 0; i < assignedRobots.size(); i++) {
+            for (int s = 0; s < assignedRobots.get(i).length; s++) {
+                assignedRobots.get(i)[s] = -1;
             }
         }
 
@@ -601,10 +600,10 @@ public class MainActivity extends AppCompatActivity {
 
             //set the schedule for this match
             for (int i = 0; i < scoutsOn.length; i++) {
-                assignedRobot.get(scoutsOn[i].id)[matchNum] = i;
+                assignedRobots.get(scoutsOn[i].id)[matchNum] = i;
             }
             for (int i = 0; i < scoutsOff.size(); i++) {
-                assignedRobot.get(scoutsOff.get(i).id)[matchNum] = -1;
+                assignedRobots.get(scoutsOff.get(i).id)[matchNum] = -1;
             }
         }
 

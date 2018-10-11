@@ -94,6 +94,47 @@ public class PullDataThread extends Thread{
                 }
             }
 
+            //send schedule
+            {
+                mainActivity.runOnUiThread(new Thread() {
+                    public void run() {
+                        mainActivity.status.setText("Connected! Sending schedule to " + device.getName() + "...");
+                    }
+                });
+
+                //the string that will contain the schedule data to send to the client
+                StringBuilder scheduleMessage = new StringBuilder("SEND SCHEDULE:::");
+
+                for (int scoutIndex = 0; scoutIndex < mainActivity.assignedRobots.size(); scoutIndex++) {
+                    scheduleMessage.append(mainActivity.allScouts.get(scoutIndex));
+
+                    //add separator
+                    scheduleMessage.append(":");
+
+                    for (int i = 0 ; i < mainActivity.assignedRobots.get(scoutIndex).length; i++) {
+                        scheduleMessage.append(mainActivity.assignedRobots.get(scoutIndex)[i]);
+
+                        if (i < mainActivity.assignedRobots.get(scoutIndex).length - 1) {
+                            //add a comma, it's not the last item
+                            scheduleMessage.append(",");
+                        }
+                    }
+
+                    if (scoutIndex < mainActivity.assignedRobots.size() - 1) {
+                        //add a separator, it's not the last item
+                        scheduleMessage.append("::");
+                    }
+                }
+
+                out.write(scheduleMessage.toString().getBytes(Charset.forName("UTF-8")));
+                String receivedMessage = waitForMessage();
+
+                if (!receivedMessage.contains("RECEIVED")) {
+                    //did not succeed, try again
+                    error = true;
+                }
+            }
+
             mainActivity.runOnUiThread(new Thread() {
                 public void run() {
                     mainActivity.status.setText("Connected! Requesting Data from " + device.getName() + "...");
@@ -121,7 +162,7 @@ public class PullDataThread extends Thread{
                 });
                     running = false;
                     return;
-            }else{
+            } else {
                 String[] data = message.split(":::")[1].split("::");
 
                 if(data[0].equals("nodata")){
