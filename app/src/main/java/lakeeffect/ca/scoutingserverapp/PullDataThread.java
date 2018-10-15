@@ -107,7 +107,7 @@ public class PullDataThread extends Thread{
                 StringBuilder scheduleMessage = new StringBuilder("SEND SCHEDULE:::");
 
                 for (int scoutIndex = 0; scoutIndex < mainActivity.assignedRobots.size(); scoutIndex++) {
-                    scheduleMessage.append(mainActivity.allScouts.get(scoutIndex));
+                    scheduleMessage.append(mainActivity.allScouts.get(scoutIndex).name);
 
                     //add separator
                     scheduleMessage.append(":");
