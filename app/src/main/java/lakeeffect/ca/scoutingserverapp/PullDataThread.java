@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -102,7 +103,7 @@ public class PullDataThread extends Thread{
                     }
                 });
 
-                //the string that will contain the schedule data to send to the client
+                //the string that will contain the scout schedule data to send to the client
                 StringBuilder scheduleMessage = new StringBuilder("SEND SCHEDULE:::");
 
                 for (int scoutIndex = 0; scoutIndex < mainActivity.assignedRobots.size(); scoutIndex++) {
@@ -121,6 +122,25 @@ public class PullDataThread extends Thread{
                     }
 
                     if (scoutIndex < mainActivity.assignedRobots.size() - 1) {
+                        //add a separator, it's not the last item
+                        scheduleMessage.append("::");
+                    }
+                }
+
+                //send the robot schedule
+                scheduleMessage.append(":::");
+
+                for (int i = 0; i < mainActivity.robotSchedule.size(); i++) {
+                    for (int s = 0; s < mainActivity.robotSchedule.get(i).size(); s++) {
+                        scheduleMessage.append(mainActivity.robotSchedule.get(i).get(s));
+
+                        if (s < mainActivity.robotSchedule.get(i).size() - 1) {
+                            //add a comma, it's not the last item
+                            scheduleMessage.append(",");
+                        }
+                    }
+
+                    if (i < mainActivity.robotSchedule.size() - 1) {
                         //add a separator, it's not the last item
                         scheduleMessage.append("::");
                     }
