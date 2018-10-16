@@ -79,6 +79,7 @@ public class PullDataThread extends Thread{
 
                 out.write("REQUEST LABELSEND".getBytes(Charset.forName("UTF-8")));
                 String labels = waitForMessage();
+                labels = labels.substring(0, labels.length() - 3);
 
                 int version = Integer.parseInt(labels.split(":::")[0]);
                 if(version >= mainActivity.minVersionNum){
