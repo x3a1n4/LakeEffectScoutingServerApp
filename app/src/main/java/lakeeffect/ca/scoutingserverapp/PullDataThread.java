@@ -166,7 +166,7 @@ public class PullDataThread extends Thread{
             out.write("REQUEST DATAEND".getBytes(Charset.forName("UTF-8")));
             String message = waitForMessage();
 
-            message = message.substring(0, message.length() - 1);
+            message = message.substring(0, message.length() - 3);
 
             mainActivity.runOnUiThread(new Thread() {
                 public void run() {
@@ -281,9 +281,8 @@ public class PullDataThread extends Thread{
             else continue;
 
             String message = finalMessage + new String(bytes, Charset.forName("UTF-8"));
-            if(!message.endsWith("\n")){
+            if(!message.endsWith("END")){
                 finalMessage = message;
-                System.out.println(finalMessage + " message");
                 continue;
             }
 
