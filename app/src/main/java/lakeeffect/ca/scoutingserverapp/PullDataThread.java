@@ -77,7 +77,7 @@ public class PullDataThread extends Thread{
                    }
                });
 
-                out.write("REQUEST LABELS".getBytes(Charset.forName("UTF-8")));
+                out.write("REQUEST LABELSEND".getBytes(Charset.forName("UTF-8")));
                 String labels = waitForMessage();
 
                 int version = Integer.parseInt(labels.split(":::")[0]);
@@ -145,6 +145,9 @@ public class PullDataThread extends Thread{
                     }
                 }
 
+                //this message has finished
+                scheduleMessage.append("END");
+
                 out.write(scheduleMessage.toString().getBytes(Charset.forName("UTF-8")));
                 String receivedMessage = waitForMessage();
 
@@ -160,7 +163,7 @@ public class PullDataThread extends Thread{
                 }
             });
 
-            out.write("REQUEST DATA".getBytes(Charset.forName("UTF-8")));
+            out.write("REQUEST DATAEND".getBytes(Charset.forName("UTF-8")));
             String message = waitForMessage();
 
             message = message.substring(0, message.length() - 1);
@@ -208,7 +211,7 @@ public class PullDataThread extends Thread{
 
             }
 
-            out.write("RECEIVED".getBytes(Charset.forName("UTF-8")));
+            out.write("RECEIVEDEND".getBytes(Charset.forName("UTF-8")));
 
         } catch (IOException e) {
             e.printStackTrace();
