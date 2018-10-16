@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -76,8 +77,9 @@ public class PullDataThread extends Thread{
                    }
                });
 
-                out.write("REQUEST LABELS".getBytes(Charset.forName("UTF-8")));
+                out.write("REQUEST LABELSEND".getBytes(Charset.forName("UTF-8")));
                 String labels = waitForMessage();
+                labels = labels.substring(0, labels.length() - 3);
 
                 int version = Integer.parseInt(labels.split(":::")[0]);
                 if(version >= mainActivity.minVersionNum){
@@ -94,16 +96,78 @@ public class PullDataThread extends Thread{
                 }
             }
 
+            //send schedule
+            {
+                mainActivity.runOnUiThread(new Thread() {
+                    public void run() {
+                        mainActivity.status.setText("Connected! Sending schedule to " + device.getName() + "...");
+                    }
+                });
+
+                //the string that will contain the scout schedule data to send to the client
+                StringBuilder scheduleMessage = new StringBuilder("SEND SCHEDULE:::");
+
+                for (int scoutIndex = 0; scoutIndex < mainActivity.assignedRobots.size(); scoutIndex++) {
+                    scheduleMessage.append(mainActivity.allScouts.get(scoutIndex).name);
+
+                    //add separator
+                    scheduleMessage.append(":");
+
+                    for (int i = 0 ; i < mainActivity.assignedRobots.get(scoutIndex).length; i++) {
+                        scheduleMessage.append(mainActivity.assignedRobots.get(scoutIndex)[i]);
+
+                        if (i < mainActivity.assignedRobots.get(scoutIndex).length - 1) {
+                            //add a comma, it's not the last item
+                            scheduleMessage.append(",");
+                        }
+                    }
+
+                    if (scoutIndex < mainActivity.assignedRobots.size() - 1) {
+                        //add a separator, it's not the last item
+                        scheduleMessage.append("::");
+                    }
+                }
+
+                //send the robot schedule
+                scheduleMessage.append(":::");
+
+                for (int i = 0; i < mainActivity.robotSchedule.size(); i++) {
+                    for (int s = 0; s < mainActivity.robotSchedule.get(i).size(); s++) {
+                        scheduleMessage.append(mainActivity.robotSchedule.get(i).get(s));
+
+                        if (s < mainActivity.robotSchedule.get(i).size() - 1) {
+                            //add a comma, it's not the last item
+                            scheduleMessage.append(",");
+                        }
+                    }
+                    if (i < mainActivity.robotSchedule.size() - 1) {
+                        //add a separator, it's not the last item
+                        scheduleMessage.append("::");
+                    }
+                }
+
+                //this message has finished
+                scheduleMessage.append("END");
+
+                out.write(scheduleMessage.toString().getBytes(Charset.forName("UTF-8")));
+                String receivedMessage = waitForMessage();
+
+                if (!receivedMessage.contains("RECEIVED")) {
+                    //did not succeed, try again
+                    error = true;
+                }
+            }
+
             mainActivity.runOnUiThread(new Thread() {
                 public void run() {
                     mainActivity.status.setText("Connected! Requesting Data from " + device.getName() + "...");
                 }
             });
 
-            out.write("REQUEST DATA".getBytes(Charset.forName("UTF-8")));
+            out.write("REQUEST DATAEND".getBytes(Charset.forName("UTF-8")));
             String message = waitForMessage();
 
-            message = message.substring(0, message.length() - 1);
+            message = message.substring(0, message.length() - 3);
 
             mainActivity.runOnUiThread(new Thread() {
                 public void run() {
@@ -121,7 +185,7 @@ public class PullDataThread extends Thread{
                 });
                     running = false;
                     return;
-            }else{
+            } else {
                 String[] data = message.split(":::")[1].split("::");
 
                 if(data[0].equals("nodata")){
@@ -148,7 +212,7 @@ public class PullDataThread extends Thread{
 
             }
 
-            out.write("RECEIVED".getBytes(Charset.forName("UTF-8")));
+            out.write("RECEIVEDEND".getBytes(Charset.forName("UTF-8")));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -218,9 +282,8 @@ public class PullDataThread extends Thread{
             else continue;
 
             String message = finalMessage + new String(bytes, Charset.forName("UTF-8"));
-            if(!message.endsWith("\n")){
+            if(!message.endsWith("END")){
                 finalMessage = message;
-                System.out.println(finalMessage + " message");
                 continue;
             }
 

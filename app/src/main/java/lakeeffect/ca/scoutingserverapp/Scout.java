@@ -22,6 +22,9 @@ public class Scout {
     //inclusive
     ArrayList<Integer> lastMatches = new ArrayList<>();
 
+    //if this just had an undo applied, used to ignore onCheckChange listeners
+    boolean undo;
+
     public Scout(int id, String name) {
         this.id = id;
         this.name = name;
@@ -55,6 +58,11 @@ public class Scout {
 
     //does this scout exist at this match
     public boolean existsAtMatch(int matchNum) {
+        //they were never selected if this is true
+        if (startMatches.size() == 0) {
+            return false;
+        }
+
         for (int i = 0; i < startMatches.size(); i++) {
             if (startMatches.get(i) <= matchNum) {
                 //has it been closed since then

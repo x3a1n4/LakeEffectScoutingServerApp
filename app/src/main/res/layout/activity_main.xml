@@ -123,10 +123,10 @@
             android:id="@+id/timeOffText"/>
 
         <EditText
-            android:layout_width="84dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:inputType="number"
-            android:ems="10"
+            android:ems="4"
             android:id="@+id/timeOff"/>
 
     </LinearLayout>
@@ -146,9 +146,9 @@
 
         <EditText
             android:id="@+id/timeOffMatchNum"
-            android:layout_width="84dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:ems="10"
+            android:ems="4"
             android:inputType="number" />
 
         <Button

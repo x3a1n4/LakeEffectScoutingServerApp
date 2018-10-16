@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Set;
 
@@ -69,12 +68,14 @@ public class MainActivity extends AppCompatActivity {
     //the robots schedules
     ArrayList<ArrayList<Integer>> robotSchedule = new ArrayList<>();
 
-    //list of allNames added
-    ArrayList<String> allNames = new ArrayList<>();
-    //the names that have been checked off
-    ArrayList<Scout> selectedNames = new ArrayList<>();
+    //the list of all scouts
+    ArrayList<Scout> allScouts = new ArrayList<>();
     //for each selected name, there is an array of assigned robots (0 - 5 per match, -1 being a break)
-    ArrayList<int[]> assignedRobot = new ArrayList<>();
+    ArrayList<int[]> assignedRobots = new ArrayList<>();
+
+    //the last actions that have happened, used to undo actions is necessary
+    ArrayList<Action> pastActions = new ArrayList<>();
+    final int PAST_ACTIONS_MAX = 25;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -236,18 +237,13 @@ public class MainActivity extends AppCompatActivity {
 
         //load names
         SharedPreferences namesPreferences = getSharedPreferences("names", MODE_PRIVATE);
-        String allNamesText = namesPreferences.getString("allNames", "");
-        if (!allNamesText.equals("")) {
-            allNames = new ArrayList<>(Arrays.asList(allNamesText.split(",")));
-        }
-
-        String selectedNamesText = namesPreferences.getString("selectedNames", "");
+        String selectedNamesText = namesPreferences.getString("allScouts", "");
         if (!selectedNamesText.equals("")) {
             String[] selectedNamesArray = selectedNamesText.split(",");
 
             for (int i = 0; i < selectedNamesArray.length; i++) {
                 Scout scout = new Scout(selectedNamesArray[i]);
-                selectedNames.add(scout);
+                allScouts.add(scout);
             }
         }
 
@@ -259,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
                 //add all start matches
                 String[] scoutStartMatchesArray = selectedNameStartMatchesArray[i].split(";");
                 for (int s = 0; s < scoutStartMatchesArray.length; s++) {
-                    selectedNames.get(i).startMatches.add(Integer.parseInt(scoutStartMatchesArray[s]));
+                    allScouts.get(i).startMatches.add(Integer.parseInt(scoutStartMatchesArray[s]));
                 }
             }
         }
@@ -273,7 +269,7 @@ public class MainActivity extends AppCompatActivity {
                     //add all last matches
                     String[] scoutLastMatchesArray = selectedNameLastMatchesArray[i].split(";");
                     for (int s = 0; s < scoutLastMatchesArray.length; s++) {
-                        selectedNames.get(i).lastMatches.add(Integer.parseInt(scoutLastMatchesArray[s]));
+                        allScouts.get(i).lastMatches.add(Integer.parseInt(scoutLastMatchesArray[s]));
                     }
                 }
             }
@@ -449,17 +445,15 @@ public class MainActivity extends AppCompatActivity {
 
             int lineNum = 0;
             while ((line = br.readLine()) != null) {
-                if(lineNum > 0) {
-                    String[] robots = line.split(",");
+                String[] robots = line.split(",");
 
-                    ArrayList<Integer> robotNumbers = new ArrayList<>();
+                ArrayList<Integer> robotNumbers = new ArrayList<>();
 
-                    for (int s = 0; s < robots.length; s++) {
-                        robotNumbers.add(Integer.parseInt(robots[i]));
-                    }
-
-                    robotSchedule.add(robotNumbers);
+                for (int s = 0; s < robots.length; s++) {
+                    robotNumbers.add(Integer.parseInt(robots[s]));
                 }
+
+                robotSchedule.add(robotNumbers);
                 lineNum ++;
             }
             br.close();
@@ -469,7 +463,7 @@ public class MainActivity extends AppCompatActivity {
     //creates the schedule based on the selected usernames
     //returns null if successful, and error message if not
     public String createSchedule() {
-        if (selectedNames.size() < 6) {
+        if (getSelectedAmount() < 6) {
             return "You must select at least 6 scouts";
         }
 
@@ -478,15 +472,15 @@ public class MainActivity extends AppCompatActivity {
         ArrayList<Scout> scoutsOff = new ArrayList<>();
 
         //set assigned robots to correct size
-        assignedRobot = new ArrayList<>();
-        for (int i = 0; i < selectedNames.size(); i++) {
-            assignedRobot.add(new int[robotSchedule.size()]);
+        assignedRobots = new ArrayList<>();
+        for (int i = 0; i < allScouts.size(); i++) {
+            assignedRobots.add(new int[robotSchedule.size()]);
         }
 
         //reset assigned robots
-        for (int i = 0; i < assignedRobot.size(); i++) {
-            for (int s = 0; s < assignedRobot.get(i).length; s++) {
-                assignedRobot.get(i)[s] = -1;
+        for (int i = 0; i < assignedRobots.size(); i++) {
+            for (int s = 0; s < assignedRobots.get(i).length; s++) {
+                assignedRobots.get(i)[s] = -1;
             }
         }
 
@@ -499,10 +493,10 @@ public class MainActivity extends AppCompatActivity {
             }
 
             //if they are not starting on the first match
-            if (selectedNames.get(i).getLowestStartMatch() > 0) {
-                Scout scout = selectedNames.get(i);
-                selectedNames.remove(scout);
-                selectedNames.add(scout);
+            if (allScouts.get(i).getLowestStartMatch() > 0) {
+                Scout scout = allScouts.get(i);
+                allScouts.remove(scout);
+                allScouts.add(scout);
                 //try again
                 i--;
                 //add to the non ready scouts to make sure this is not an infinite loop
@@ -510,25 +504,25 @@ public class MainActivity extends AppCompatActivity {
                 continue;
             }
 
-            scoutsOn[i] = new Scout(i, selectedNames.get(i).name);
+            scoutsOn[i] = new Scout(i, allScouts.get(i).name);
         }
 
-        for (int i = 6; i < selectedNames.size(); i++) {
+        for (int i = 6; i < allScouts.size(); i++) {
             //if they are not starting on the first match
-            if (selectedNames.get(i).getLowestStartMatch() > 0) {
+            if (allScouts.get(i).getLowestStartMatch() > 0) {
                 continue;
             }
 
-            Scout scout = new Scout(i, selectedNames.get(i).name);
+            Scout scout = new Scout(i, allScouts.get(i).name);
             scoutsOff.add(scout);
             scout.timeOff = 0;
         }
 
         for (int matchNum = 0; matchNum < robotSchedule.size(); matchNum++) {
             //figure out if some selected names should be added or removed because it is now their start match or last match
-            for (int i = 0; i < selectedNames.size(); i++) {
+            for (int i = 0; i < allScouts.size(); i++) {
                 //if it is time to add this scout to the roster and they are not already added
-                Scout scout = selectedNames.get(i);
+                Scout scout = allScouts.get(i);
                 boolean existsAtMatch = scout.existsAtMatch(matchNum);
                 if (existsAtMatch && getScout(i, scoutsOff) == -1 && getScout(i, scoutsOn) == -1) {
                     Scout newScout = new Scout(i, scout.name);
@@ -604,10 +598,10 @@ public class MainActivity extends AppCompatActivity {
 
             //set the schedule for this match
             for (int i = 0; i < scoutsOn.length; i++) {
-                assignedRobot.get(scoutsOn[i].id)[matchNum] = i;
+                assignedRobots.get(scoutsOn[i].id)[matchNum] = i;
             }
             for (int i = 0; i < scoutsOff.size(); i++) {
-                assignedRobot.get(scoutsOff.get(i).id)[matchNum] = -1;
+                assignedRobots.get(scoutsOff.get(i).id)[matchNum] = -1;
             }
         }
 
@@ -641,6 +635,17 @@ public class MainActivity extends AppCompatActivity {
         return -1;
     }
 
+    public int getSelectedAmount() {
+        int selectedAmount = 0;
+        for (Scout scout : allScouts) {
+            if (scout.startMatches.size() > 0) {
+                selectedAmount++;
+            }
+        }
+
+        return selectedAmount;
+    }
+
     //dialog box that lets you edit and deselect names
     public void openNameEditor() {
 
@@ -660,18 +665,17 @@ public class MainActivity extends AppCompatActivity {
         final TextView currentMatchNumber = ((TextView) addName.findViewById(R.id.currentMatchNumber));
 
         //add checkbox and close button for each username
-        for (int i = 0; i < allNames.size(); i++) {
+        for (int i = 0; i < allScouts.size(); i++) {
             final View view = View.inflate(this, R.layout.closable_checkbox, null);
 
             CheckBox checkBox = ((CheckBox) view.findViewById(R.id.nameCheckBox));
 
-            final String name = allNames.get(i);
+            final Scout scout = allScouts.get(i);
 
-            checkBox.setText(name);
+            checkBox.setText(scout.name);
 
             //if it is selected, check the box
-            int index = getScout(name, selectedNames);
-            if (index != -1 && selectedNames.get(index).existsAtMatch(robotSchedule.size() - 1)) {
+            if (scout.existsAtMatch(robotSchedule.size() - 1)) {
                 checkBox.setChecked(true);
             }
 
@@ -679,7 +683,7 @@ public class MainActivity extends AppCompatActivity {
             checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    nameClicked(buttonView, isChecked, name, currentMatchNumber);
+                    nameClicked(buttonView, isChecked, scout.name, currentMatchNumber);
                 }
             });
 
@@ -689,9 +693,14 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     createdNames.removeView(view);
-                    allNames.remove(name);
-                    if (getScout(name, selectedNames) != -1) {
-                        selectedNames.remove(getScout(name, selectedNames));
+                    allScouts.remove(scout);
+
+                    //a scout was removed
+                    //add the action to the past actions list
+                    pastActions.add(new Action(3, scout, view));
+
+                    if (pastActions.size() > PAST_ACTIONS_MAX) {
+                        pastActions.remove(0);
                     }
 
                     updateNames();
@@ -715,12 +724,19 @@ public class MainActivity extends AppCompatActivity {
                 nameEditText.setText("");
 
                 //add it to the list
-                allNames.add(name);
+                final Scout scout = new Scout(-1, name);
+                allScouts.add(scout);
 
                 updateNames();
 
                 //add it to the UI
                 final View view = View.inflate(MainActivity.this, R.layout.closable_checkbox, null);
+
+                //add the action to the past actions list
+                pastActions.add(new Action(2, scout, view));
+                if (pastActions.size() > PAST_ACTIONS_MAX) {
+                    pastActions.remove(0);
+                }
 
                 CheckBox checkBox = ((CheckBox) view.findViewById(R.id.nameCheckBox));
 
@@ -739,9 +755,13 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onClick(View v) {
                         createdNames.removeView(view);
-                        allNames.remove(name);
-                        if (getScout(name, selectedNames) != -1) {
-                            selectedNames.remove(getScout(name, selectedNames));
+                        allScouts.remove(scout);
+
+                        //a scout was removed
+                        //add the action to the past actions list
+                        pastActions.add(new Action(3, scout, view));
+                        if (pastActions.size() > PAST_ACTIONS_MAX) {
+                            pastActions.remove(0);
                         }
 
                         updateNames();
@@ -749,6 +769,48 @@ public class MainActivity extends AppCompatActivity {
                 });
 
                 createdNames.addView(view);
+            }
+        });
+
+        //setup undo button
+        addName.findViewById(R.id.undoPastAction).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //create confirmation dialog
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Are you sure you would like to undo?")
+                    .setNegativeButton("No", null)
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            //get last action
+                            Action undoAction = pastActions.get(pastActions.size() - 1);
+
+                            switch (undoAction.type) {
+                                case 0:
+                                    undoAction.scout.startMatches.remove(undoAction.scout.startMatches.size() - 1);
+                                    undoAction.scout.undo = true;
+                                    ((CheckBox) undoAction.view).setChecked(false);
+                                    break;
+                                case 1:
+                                    undoAction.scout.lastMatches.remove(undoAction.scout.lastMatches.size() - 1);
+                                    undoAction.scout.undo = true;
+                                    ((CheckBox) undoAction.view).setChecked(true);
+                                    break;
+                                case 2:
+                                    allScouts.remove(undoAction.scout);
+                                    createdNames.removeView(undoAction.view);
+                                    break;
+                                case 3:
+                                    allScouts.add(undoAction.scout);
+                                    createdNames.addView(undoAction.view);
+                            }
+
+                            //remove past action from list now
+                            pastActions.remove(undoAction);
+                        }
+                    })
+                    .show();
             }
         });
 
@@ -766,14 +828,26 @@ public class MainActivity extends AppCompatActivity {
 
     //called when a name is checked or unchecked
     public void nameClicked(CompoundButton checkbox, boolean isChecked, String name, TextView currentMatchNumber) {
-        int scoutIndex = getScout(name, selectedNames);
+        int scoutIndex = getScout(name, allScouts);
         int matchNum = Integer.parseInt(currentMatchNumber.getText().toString()) - 1;
+
+        //the checkbox was programmatically checked, no need to check anything
+        if (scoutIndex != -1 && allScouts.get(scoutIndex).undo) {
+            allScouts.get(scoutIndex).undo = false;
+            return;
+        }
 
         if (isChecked) {
             if (scoutIndex == -1) {
-                selectedNames.add(new Scout(name, matchNum));
+                allScouts.add(new Scout(name, matchNum));
+
+                runOnUiThread(new Thread() {
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "This should not happen!!!", Toast.LENGTH_SHORT).show();
+                    }
+                });
             } else {
-                Scout scout = selectedNames.get(scoutIndex);
+                Scout scout = allScouts.get(scoutIndex);
 
                 if (scout.existsAtMatch(matchNum)) {
                     //this action should not happen, this is an invalid time
@@ -788,10 +862,16 @@ public class MainActivity extends AppCompatActivity {
 
                 //enable them at that match number
                 scout.startMatches.add(matchNum);
+
+                //add the action to the past actions list
+                pastActions.add(new Action(0, scout, checkbox));
+                if (pastActions.size() > PAST_ACTIONS_MAX) {
+                    pastActions.remove(0);
+                }
             }
         } else {
             if (scoutIndex != -1) {
-                Scout scout = selectedNames.get(scoutIndex);
+                Scout scout = allScouts.get(scoutIndex);
 
                 if (!scout.existsAtMatch(matchNum)) {
                     //this action should not happen, this is an invalid time
@@ -817,6 +897,15 @@ public class MainActivity extends AppCompatActivity {
                     //undo as an error has been caused
                     scout.lastMatches.remove(scout.lastMatches.size() - 1);
                     checkbox.setChecked(true);
+                } else {
+                    //it was successful
+
+                    //add the action to the past actions list
+                    pastActions.add(new Action(1, scout, checkbox));
+
+                    if (pastActions.size() > PAST_ACTIONS_MAX) {
+                        pastActions.remove(0);
+                    }
                 }
             }
         }
@@ -830,9 +919,9 @@ public class MainActivity extends AppCompatActivity {
 
         //get all the names in csv
         String names = "";
-        for (String name : allNames) {
-            names += name;
-            if (allNames.indexOf(name) < allNames.size() - 1) {
+        for (Scout scout : allScouts) {
+            names += scout.name;
+            if (allScouts.indexOf(scout) < allScouts.size() - 1) {
                 names += ",";
             }
         }
@@ -844,7 +933,7 @@ public class MainActivity extends AppCompatActivity {
         String allSelectedNames = "";
         String allSelectedNameStartMatches = "";
         String allSelectedNameLastMatches = "";
-        for (Scout scout : selectedNames) {
+        for (Scout scout : allScouts) {
             allSelectedNames += scout.name;
             for (int i = 0; i < scout.startMatches.size(); i++) {
                 allSelectedNameStartMatches += scout.startMatches.get(i);
@@ -859,13 +948,13 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            if (selectedNames.indexOf(scout) < selectedNames.size() - 1) {
+            if (allScouts.indexOf(scout) < allScouts.size() - 1) {
                 allSelectedNames += ",";
                 allSelectedNameStartMatches += ",";
                 allSelectedNameLastMatches += ",";
             }
         }
-        editor.putString("selectedNames", allSelectedNames);
+        editor.putString("allScouts", allSelectedNames);
         editor.putString("selectedNameStartMatches", allSelectedNameStartMatches);
         editor.putString("selectedNameLastMatches", allSelectedNameLastMatches);
 
