@@ -445,17 +445,15 @@ public class MainActivity extends AppCompatActivity {
 
             int lineNum = 0;
             while ((line = br.readLine()) != null) {
-                if(lineNum > 0) {
-                    String[] robots = line.split(",");
+                String[] robots = line.split(",");
 
-                    ArrayList<Integer> robotNumbers = new ArrayList<>();
+                ArrayList<Integer> robotNumbers = new ArrayList<>();
 
-                    for (int s = 0; s < robots.length; s++) {
-                        robotNumbers.add(Integer.parseInt(robots[s]));
-                    }
-
-                    robotSchedule.add(robotNumbers);
+                for (int s = 0; s < robots.length; s++) {
+                    robotNumbers.add(Integer.parseInt(robots[s]));
                 }
+
+                robotSchedule.add(robotNumbers);
                 lineNum ++;
             }
             br.close();
