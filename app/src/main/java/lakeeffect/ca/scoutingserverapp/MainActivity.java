@@ -451,7 +451,7 @@ public class MainActivity extends AppCompatActivity {
                     ArrayList<Integer> robotNumbers = new ArrayList<>();
 
                     for (int s = 0; s < robots.length; s++) {
-                        robotNumbers.add(Integer.parseInt(robots[i]));
+                        robotNumbers.add(Integer.parseInt(robots[s]));
                     }
 
                     robotSchedule.add(robotNumbers);

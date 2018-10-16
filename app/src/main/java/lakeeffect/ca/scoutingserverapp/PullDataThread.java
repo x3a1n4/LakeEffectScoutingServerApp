@@ -139,7 +139,6 @@ public class PullDataThread extends Thread{
                             scheduleMessage.append(",");
                         }
                     }
-
                     if (i < mainActivity.robotSchedule.size() - 1) {
                         //add a separator, it's not the last item
                         scheduleMessage.append("::");
