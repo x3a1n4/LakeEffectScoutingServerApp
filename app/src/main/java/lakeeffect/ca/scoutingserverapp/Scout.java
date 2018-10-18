@@ -1,5 +1,7 @@
 package lakeeffect.ca.scoutingserverapp;
 
+import android.view.View;
+
 import java.util.ArrayList;
 
 /**
@@ -8,6 +10,10 @@ import java.util.ArrayList;
 public class Scout {
     int id;
     String name;
+
+    //the view that this scout is held on (for removing it from view)
+    //only used when dealing with scout variable for UI, not for calculating schedules
+    View view;
 
     //the match this scout started being off
     int timeOff = 0;
@@ -25,19 +31,15 @@ public class Scout {
     //if this just had an undo applied, used to ignore onCheckChange listeners
     boolean undo;
 
+    public Scout(int id, String name, View view) {
+        this.id = id;
+        this.name = name;
+        this.view = view;
+    }
+
     public Scout(int id, String name) {
         this.id = id;
         this.name = name;
-    }
-
-    public Scout(String name, int startMatch) {
-        this.name = name;
-
-        //make sure startMatch is not negative
-        if (startMatch < 0) {
-            startMatch = 0;
-        }
-        startMatches.add(startMatch - 1);
     }
 
     public Scout(String name) {

@@ -671,6 +671,7 @@ public class MainActivity extends AppCompatActivity {
             CheckBox checkBox = ((CheckBox) view.findViewById(R.id.nameCheckBox));
 
             final Scout scout = allScouts.get(i);
+            scout.view = view;
 
             checkBox.setText(scout.name);
 
@@ -723,14 +724,14 @@ public class MainActivity extends AppCompatActivity {
                 //reset text
                 nameEditText.setText("");
 
+                //add it to the UI
+                final View view = View.inflate(MainActivity.this, R.layout.closable_checkbox, null);
+
                 //add it to the list
-                final Scout scout = new Scout(-1, name);
+                final Scout scout = new Scout(-1, name, view);
                 allScouts.add(scout);
 
                 updateNames();
-
-                //add it to the UI
-                final View view = View.inflate(MainActivity.this, R.layout.closable_checkbox, null);
 
                 //add the action to the past actions list
                 pastActions.add(new Action(2, scout, view));
@@ -754,7 +755,7 @@ public class MainActivity extends AppCompatActivity {
                 view.findViewById(R.id.nameClose).setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        createdNames.removeView(view);
+                        createdNames.removeView(scout.view);
                         allScouts.remove(scout);
 
                         //a scout was removed
@@ -814,6 +815,31 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        //setup reset names button
+        addName.findViewById(R.id.resetNames).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //create confirmation dialog
+                new AlertDialog.Builder(MainActivity.this)
+                    .setTitle("Are you sure you would like to reset the names?")
+                    .setMessage("This will reset all the on and off schedule assosiated with them, you cannot undo this change.")
+                    .setNegativeButton("No", null)
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            for (Scout scout : allScouts) {
+                                createdNames.removeView(scout.view);
+                            }
+
+                            allScouts.removeAll(allScouts);
+
+                            updateNames();
+                        }
+                    })
+                    .show();
+            }
+        });
+
         fullView.addView(addName);
 
         fullScrollView.addView(fullView);
@@ -838,36 +864,26 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (isChecked) {
-            if (scoutIndex == -1) {
-                allScouts.add(new Scout(name, matchNum));
+            Scout scout = allScouts.get(scoutIndex);
 
+            if (scout.existsAtMatch(matchNum)) {
+                //this action should not happen, this is an invalid time
                 runOnUiThread(new Thread() {
                     public void run() {
-                        Toast.makeText(MainActivity.this, "This should not happen!!!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(MainActivity.this, "This scout is already enabled at that match", Toast.LENGTH_SHORT).show();
                     }
                 });
-            } else {
-                Scout scout = allScouts.get(scoutIndex);
+                checkbox.setChecked(false);
+                return;
+            }
 
-                if (scout.existsAtMatch(matchNum)) {
-                    //this action should not happen, this is an invalid time
-                    runOnUiThread(new Thread() {
-                        public void run() {
-                            Toast.makeText(MainActivity.this, "This scout is already enabled at that match", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                    checkbox.setChecked(false);
-                    return;
-                }
+            //enable them at that match number
+            scout.startMatches.add(matchNum);
 
-                //enable them at that match number
-                scout.startMatches.add(matchNum);
-
-                //add the action to the past actions list
-                pastActions.add(new Action(0, scout, checkbox));
-                if (pastActions.size() > PAST_ACTIONS_MAX) {
-                    pastActions.remove(0);
-                }
+            //add the action to the past actions list
+            pastActions.add(new Action(0, scout, checkbox));
+            if (pastActions.size() > PAST_ACTIONS_MAX) {
+                pastActions.remove(0);
             }
         } else {
             if (scoutIndex != -1) {
