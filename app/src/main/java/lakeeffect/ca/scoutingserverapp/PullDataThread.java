@@ -196,13 +196,15 @@ public class PullDataThread extends Thread{
                     });
                 }else{
                     for(int i = 0; i < data.length; i++){
-                        if(mainActivity.uuids.contains(mainActivity.getUUIDFromData(data[i]))){
+                        if(mainActivity.stringListContains(mainActivity.uuids, mainActivity.getUUIDFromData(data[i]))){
                             //send toast saying that the data already exists
                             mainActivity.runOnUiThread(new Thread(){
                                 public void run(){
                                     Toast.makeText(mainActivity, "Duplicate data detected and removed", Toast.LENGTH_LONG).show();
                                 }
                             });
+
+                            //don't save the data
                             continue;
                         }
                         mainActivity.save(data[i], mainActivity.labels);
