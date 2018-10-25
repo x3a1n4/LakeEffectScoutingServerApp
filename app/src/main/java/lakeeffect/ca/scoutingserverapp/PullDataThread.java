@@ -36,6 +36,8 @@ public class PullDataThread extends Thread{
     int tries = 0;
     int maxTries = 5;
 
+    final String endSplitter = "{e}";
+
     public PullDataThread(MainActivity mainActivity, BluetoothDevice bluetoothDevice, View deviceMenu){
         this.mainActivity = mainActivity;
         this.device = bluetoothDevice;
@@ -77,7 +79,7 @@ public class PullDataThread extends Thread{
                    }
                });
 
-                out.write("REQUEST LABELSEND".getBytes(Charset.forName("UTF-8")));
+                out.write(("REQUEST LABELS" + endSplitter).getBytes(Charset.forName("UTF-8")));
                 String labels = waitForMessage();
                 labels = labels.substring(0, labels.length() - 3);
 
@@ -147,7 +149,7 @@ public class PullDataThread extends Thread{
                 }
 
                 //this message has finished
-                scheduleMessage.append("END");
+                scheduleMessage.append(endSplitter);
 
                 out.write(scheduleMessage.toString().getBytes(Charset.forName("UTF-8")));
                 String receivedMessage = waitForMessage();
@@ -164,7 +166,7 @@ public class PullDataThread extends Thread{
                 }
             });
 
-            out.write("REQUEST DATAEND".getBytes(Charset.forName("UTF-8")));
+            out.write(("REQUEST DATA" + endSplitter).getBytes(Charset.forName("UTF-8")));
             String message = waitForMessage();
 
             message = message.substring(0, message.length() - 3);
@@ -214,7 +216,7 @@ public class PullDataThread extends Thread{
 
             }
 
-            out.write("RECEIVEDEND".getBytes(Charset.forName("UTF-8")));
+            out.write(("RECEIVED" + endSplitter).getBytes(Charset.forName("UTF-8")));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -284,7 +286,7 @@ public class PullDataThread extends Thread{
             else continue;
 
             String message = finalMessage + new String(bytes, Charset.forName("UTF-8"));
-            if(!message.endsWith("END")){
+            if(!message.endsWith("")){
                 finalMessage = message;
                 continue;
             }
