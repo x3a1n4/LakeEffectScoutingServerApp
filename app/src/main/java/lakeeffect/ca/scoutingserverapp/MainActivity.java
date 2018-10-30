@@ -1083,6 +1083,16 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public boolean stringListContains(ArrayList<String> list, String string) {
+        for (String listString : list) {
+            if (listString.equals(string)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public ArrayList<String> readData() throws IOException {
 
         File sdCard = Environment.getExternalStorageDirectory();
