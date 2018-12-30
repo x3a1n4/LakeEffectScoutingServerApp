@@ -18,4 +18,4 @@ Make sure to use the same versions of the server and client are used, or else th
 
 # Companion Client App
 
-https://github.com/ajayyy/LakeEffectScoutingApp
+https://github.com/LakeEffectRobotics/LakeEffectScoutingApp
