@@ -2,6 +2,7 @@ package lakeeffect.ca.scoutingserverapp;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.util.Base64;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -80,12 +81,14 @@ public class PullDataThread extends Thread{
                });
 
                 out.write(("REQUEST LABELS" + endSplitter).getBytes(Charset.forName("UTF-8")));
-                String labels = waitForMessage();
-                labels = labels.substring(0, labels.length() - 3);
+                String fullLabelsMessage = waitForMessage();
+                fullLabelsMessage = fullLabelsMessage.substring(0, fullLabelsMessage.length() - 3);
 
-                int version = Integer.parseInt(labels.split(":::")[0]);
+                int version = Integer.parseInt(fullLabelsMessage.split(":::")[0]);
                 if(version >= mainActivity.minVersionNum){
-                    mainActivity.labels = labels.split(":::")[1];
+                    String labels = fullLabelsMessage.split(":::")[1];
+                    String decodedLabels = new String(Base64.decode(labels, Base64.DEFAULT), Charset.forName("UTF-8"));
+                    mainActivity.labels = decodedLabels;
                 }else{
                     //send toast saying that the client has a version too old
                     mainActivity.runOnUiThread(new Thread(){
@@ -198,7 +201,10 @@ public class PullDataThread extends Thread{
                     });
                 }else{
                     for(int i = 0; i < data.length; i++){
-                        if(mainActivity.stringListContains(mainActivity.uuids, mainActivity.getUUIDFromData(data[i]))){
+                        String matchData = data[i];
+                        String decodedMatchData = new String(Base64.decode(matchData, Base64.DEFAULT), Charset.forName("UTF-8"));
+
+                        if(mainActivity.stringListContains(mainActivity.uuids, mainActivity.getUUIDFromData(decodedMatchData))){
                             //send toast saying that the data already exists
                             mainActivity.runOnUiThread(new Thread(){
                                 public void run(){
@@ -209,8 +215,8 @@ public class PullDataThread extends Thread{
                             //don't save the data
                             continue;
                         }
-                        mainActivity.save(data[i], mainActivity.labels);
-                        mainActivity.uuids.add(data[i]);
+                        mainActivity.save(decodedMatchData, mainActivity.labels);
+                        mainActivity.uuids.add(decodedMatchData);
                     }
                 }
 
@@ -291,7 +297,10 @@ public class PullDataThread extends Thread{
                 continue;
             }
 
-            return message;
+            //convert message out of base 64
+            String decodedMessage = new String(Base64.decode(finalMessage, Base64.DEFAULT), Charset.forName("UTF-8"));
+
+            return decodedMessage;
         }
 
         return null;
