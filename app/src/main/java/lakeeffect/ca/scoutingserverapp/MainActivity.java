@@ -560,6 +560,9 @@ public class MainActivity extends AppCompatActivity {
             for (int i = 0; i < scoutsOff.size(); i++) {
                 if (matchNum - scoutsOff.get(i).timeOff >= targetTimeOff.getTimeOff(matchNum) && scoutsToSwitchOn.size() < 6) {
                     scoutsToSwitchOn.add(scoutsOff.get(i));
+                } else if (matchNum - scoutsOff.get(i).timeOff >= targetTimeOff.getTimeOff(matchNum) && scoutsToSwitchOn.size() >= 6) {
+                    //too many people have already been switched on, reset these scout's timeOff
+                    scoutsOff.get(i).timeOff = matchNum;
                 }
             }
 
