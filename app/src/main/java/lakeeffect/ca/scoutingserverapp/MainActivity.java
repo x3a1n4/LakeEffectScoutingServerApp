@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
     EditText timeOffEditText;
     Button timeOffSet;
     EditText timeOffMatchNumEditText;
+    Button viewSchedule;
 
     int minVersionNum;
     TimeOff targetTimeOff;
@@ -220,6 +221,15 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 openNameEditor();
+            }
+        });
+
+        viewSchedule = (Button) findViewById(R.id.viewSchedule);
+        //add click listener for view schedule
+        viewSchedule.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                openScheduleViewer();
             }
         });
 
@@ -853,6 +863,108 @@ public class MainActivity extends AppCompatActivity {
                 .setView(fullScrollView)
                 .setPositiveButton("Ok", null)
                 .show();
+    }
+
+    public void openScheduleViewer() {
+        final ScrollView fullScrollView = new ScrollView(this);
+
+        final LinearLayout scheduleViewer = (LinearLayout) getLayoutInflater().inflate(R.layout.schedule_viewer, null);
+
+        //get the match number being used
+        EditText matchNumText = (EditText) scheduleViewer.findViewById(R.id.scheduleMatchNum);
+        matchNumText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                //display new schedule
+                int matchNum = 0;
+                try {
+                    matchNum = Integer.parseInt(s.toString());
+                } catch (NumberFormatException e) {
+                    runOnUiThread(new Thread(){
+                        public void run() {
+                            Toast.makeText(MainActivity.this, "This match number is invalid", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                    return;
+                }
+                //because match number starts at 1 while inputting, not 0
+                matchNum --;
+
+                //setup schedule viewer
+                //add all the info about the current schedule
+                TextView schedules = (TextView) scheduleViewer.findViewById(R.id.scheduleViewerStatus);
+                StringBuilder schedulesText = new StringBuilder();
+
+                for (int i = 0; i < allScouts.size(); i++) {
+                    if (assignedRobots.get(i)[matchNum] != -1) {
+                        schedulesText.append(allScouts.get(i).name + " is scouting robot " + assignedRobots.get(i)[matchNum] + " and is off at match " + getNextMatchOff(i, matchNum));
+                    } else {
+                        schedulesText.append(allScouts.get(i).name + " is off and will be back on at match " + getNextMatchOn(i, matchNum));
+                    }
+
+                    schedulesText.append("\n\n");
+                }
+
+                schedules.setText(schedulesText.toString());
+            }
+        });
+
+        fullScrollView.addView(scheduleViewer);
+
+        //create the dialog box
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("View Schedule")
+                .setView(fullScrollView)
+                .setPositiveButton("Dismiss", null)
+                .show();
+    }
+
+    //this will return the match number when they have can stop scouting
+    public int getNextMatchOff(int scoutIndex, int matchNumber) {
+        int matchBack = -1;
+
+        //there is no schedule
+        if (scoutIndex == -1) return -1;
+
+        //find next match number
+        if (matchNumber <= 1) matchNumber = 1;
+        for (int i = matchNumber; i < assignedRobots.get(scoutIndex).length; i++) {
+            if (assignedRobots.get(scoutIndex)[i] == -1) {
+                matchBack = i + 1;
+                break;
+            }
+        }
+
+        return matchBack;
+    }
+
+    //this will return the match number when they have have to start scouting again
+    public int getNextMatchOn(int scoutIndex, int matchNumber) {
+        int matchBack = -1;
+
+        //there is no schedule
+        if (scoutIndex == -1) return -1;
+
+        //find next match number
+        if (matchNumber <= 0) matchNumber = 1;
+        for (int i = matchNumber; i < assignedRobots.get(scoutIndex).length; i++) {
+            if (assignedRobots.get(scoutIndex)[i] != -1) {
+                matchBack = i + 1;
+                break;
+            }
+        }
+
+        return matchBack;
     }
 
     //called when a name is checked or unchecked
