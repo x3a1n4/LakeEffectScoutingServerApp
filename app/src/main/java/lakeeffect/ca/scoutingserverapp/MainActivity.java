@@ -907,7 +907,7 @@ public class MainActivity extends AppCompatActivity {
 
                 for (int i = 0; i < allScouts.size(); i++) {
                     if (assignedRobots.get(i)[matchNum] != -1) {
-                        schedulesText.append(allScouts.get(i).name + " is scouting robot " + assignedRobots.get(i)[matchNum] + " and is off at match " + getNextMatchOff(i, matchNum));
+                        schedulesText.append(allScouts.get(i).name + " is scouting robot " + robotSchedule.get(matchNum).get(assignedRobots.get(i)[matchNum]) + " and is off at match " + getNextMatchOff(i, matchNum));
                     } else {
                         schedulesText.append(allScouts.get(i).name + " is off and will be back on at match " + getNextMatchOn(i, matchNum));
                     }
