@@ -112,49 +112,55 @@ public class PullDataThread extends Thread{
                 //the string that will contain the scout schedule data to send to the client
                 StringBuilder scheduleMessage = new StringBuilder("SEND SCHEDULE:::");
 
+                StringBuilder userSchedule = new StringBuilder();
                 for (int scoutIndex = 0; scoutIndex < mainActivity.assignedRobots.size(); scoutIndex++) {
-                    scheduleMessage.append(mainActivity.allScouts.get(scoutIndex).name);
+                    userSchedule.append(mainActivity.allScouts.get(scoutIndex).name);
 
                     //add separator
-                    scheduleMessage.append(":");
+                    userSchedule.append(":");
 
                     for (int i = 0 ; i < mainActivity.assignedRobots.get(scoutIndex).length; i++) {
-                        scheduleMessage.append(mainActivity.assignedRobots.get(scoutIndex)[i]);
+                        userSchedule.append(mainActivity.assignedRobots.get(scoutIndex)[i]);
 
                         if (i < mainActivity.assignedRobots.get(scoutIndex).length - 1) {
                             //add a comma, it's not the last item
-                            scheduleMessage.append(",");
+                            userSchedule.append(",");
                         }
                     }
 
                     if (scoutIndex < mainActivity.assignedRobots.size() - 1) {
                         //add a separator, it's not the last item
-                        scheduleMessage.append("::");
+                        userSchedule.append("::");
                     }
                 }
 
                 //send the robot schedule
-                scheduleMessage.append(":::");
+                StringBuilder robotSchedule = new StringBuilder();
 
                 for (int i = 0; i < mainActivity.robotSchedule.size(); i++) {
                     for (int s = 0; s < mainActivity.robotSchedule.get(i).size(); s++) {
-                        scheduleMessage.append(mainActivity.robotSchedule.get(i).get(s));
+                        robotSchedule.append(mainActivity.robotSchedule.get(i).get(s));
 
                         if (s < mainActivity.robotSchedule.get(i).size() - 1) {
                             //add a comma, it's not the last item
-                            scheduleMessage.append(",");
+                            robotSchedule.append(",");
                         }
                     }
                     if (i < mainActivity.robotSchedule.size() - 1) {
                         //add a separator, it's not the last item
-                        scheduleMessage.append("::");
+                        robotSchedule.append("::");
                     }
                 }
 
-                //this message has finished
+                //this message has finished, add everything together
+                scheduleMessage.append(Base64.encodeToString(userSchedule.toString().getBytes(Charset.forName("UTF-8")), Base64.DEFAULT));
+                scheduleMessage.append(":::");
+                scheduleMessage.append(Base64.encodeToString(robotSchedule.toString().getBytes(Charset.forName("UTF-8")), Base64.DEFAULT));
                 scheduleMessage.append(endSplitter);
 
-                out.write(scheduleMessage.toString().getBytes(Charset.forName("UTF-8")));
+                byte[] scheduleMessageBytes = Base64.encode(scheduleMessage.toString().getBytes(Charset.forName("UTF-8")), Base64.DEFAULT);
+
+                out.write(scheduleMessageBytes);
                 String receivedMessage = waitForMessage();
 
                 if (!receivedMessage.contains("RECEIVED")) {
