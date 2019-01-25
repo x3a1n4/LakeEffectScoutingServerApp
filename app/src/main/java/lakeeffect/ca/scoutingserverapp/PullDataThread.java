@@ -80,9 +80,8 @@ public class PullDataThread extends Thread{
                    }
                });
 
-                out.write(("REQUEST LABELS" + endSplitter).getBytes(Charset.forName("UTF-8")));
+                out.write((toBase64("REQUEST LABELS") + endSplitter).getBytes(Charset.forName("UTF-8")));
                 String fullLabelsMessage = waitForMessage();
-                fullLabelsMessage = fullLabelsMessage.substring(0, fullLabelsMessage.length() - 3);
 
                 int version = Integer.parseInt(fullLabelsMessage.split(":::")[0]);
                 if(version >= mainActivity.minVersionNum){
@@ -156,11 +155,10 @@ public class PullDataThread extends Thread{
                 scheduleMessage.append(Base64.encodeToString(userSchedule.toString().getBytes(Charset.forName("UTF-8")), Base64.DEFAULT));
                 scheduleMessage.append(":::");
                 scheduleMessage.append(Base64.encodeToString(robotSchedule.toString().getBytes(Charset.forName("UTF-8")), Base64.DEFAULT));
-                scheduleMessage.append(endSplitter);
 
-                byte[] scheduleMessageBytes = Base64.encode(scheduleMessage.toString().getBytes(Charset.forName("UTF-8")), Base64.DEFAULT);
+                String finalMessage = toBase64(scheduleMessage.toString()) + endSplitter;
 
-                out.write(scheduleMessageBytes);
+                out.write(finalMessage.getBytes(Charset.forName("UTF-8")));
                 String receivedMessage = waitForMessage();
 
                 if (!receivedMessage.contains("RECEIVED")) {
@@ -175,10 +173,8 @@ public class PullDataThread extends Thread{
                 }
             });
 
-            out.write(("REQUEST DATA" + endSplitter).getBytes(Charset.forName("UTF-8")));
+            out.write((toBase64("REQUEST DATA") + endSplitter).getBytes(Charset.forName("UTF-8")));
             String message = waitForMessage();
-
-            message = message.substring(0, message.length() - 3);
 
             mainActivity.runOnUiThread(new Thread() {
                 public void run() {
@@ -228,7 +224,7 @@ public class PullDataThread extends Thread{
 
             }
 
-            out.write(("RECEIVED" + endSplitter).getBytes(Charset.forName("UTF-8")));
+            out.write((toBase64("RECEIVED") + endSplitter).getBytes(Charset.forName("UTF-8")));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -303,6 +299,8 @@ public class PullDataThread extends Thread{
                 continue;
             }
 
+            message = message.substring(0, message.length() - endSplitter.length());
+
             //convert message out of base 64
             String decodedMessage = new String(Base64.decode(message, Base64.DEFAULT), Charset.forName("UTF-8"));
 
@@ -310,6 +308,10 @@ public class PullDataThread extends Thread{
         }
 
         return null;
+    }
+
+    public String toBase64(String string) {
+        return Base64.encodeToString(string.getBytes(Charset.forName("UTF-8")), Base64.DEFAULT);
     }
 
     public void onDestroy() throws IOException {
