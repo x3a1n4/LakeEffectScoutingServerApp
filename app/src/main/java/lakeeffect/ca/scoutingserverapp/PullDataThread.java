@@ -298,13 +298,13 @@ public class PullDataThread extends Thread{
             else continue;
 
             String message = finalMessage + new String(bytes, Charset.forName("UTF-8"));
-            if(!message.endsWith("")){
+            if(!message.endsWith(endSplitter)){
                 finalMessage = message;
                 continue;
             }
 
             //convert message out of base 64
-            String decodedMessage = new String(Base64.decode(finalMessage, Base64.DEFAULT), Charset.forName("UTF-8"));
+            String decodedMessage = new String(Base64.decode(message, Base64.DEFAULT), Charset.forName("UTF-8"));
 
             return decodedMessage;
         }
