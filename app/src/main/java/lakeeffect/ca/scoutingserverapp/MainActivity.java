@@ -181,8 +181,8 @@ public class MainActivity extends AppCompatActivity {
                 SharedPreferences.Editor editor = sharedPreferences.edit();
                 editor.putInt("targetTimeOff" + (targetTimeOff.targetTimeOff.size() - 1), newTimeOff);
                 editor.putInt("switchMatches" + (targetTimeOff.switchMatches.size() - 1), switchMatch);
-                editor.putInt("targetTimeOffSize" + (targetTimeOff.targetTimeOff.size()), targetTimeOff.targetTimeOff.size());
-                editor.putInt("switchMatchesSize" + (targetTimeOff.switchMatches.size()), targetTimeOff.switchMatches.size());
+                editor.putInt("targetTimeOffSize", targetTimeOff.targetTimeOff.size());
+                editor.putInt("switchMatchesSize", targetTimeOff.switchMatches.size());
                 editor.apply();
 
                 runOnUiThread(new Thread(){
