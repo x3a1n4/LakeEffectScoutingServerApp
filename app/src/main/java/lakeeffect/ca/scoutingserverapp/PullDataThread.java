@@ -2,6 +2,7 @@ package lakeeffect.ca.scoutingserverapp;
 
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.util.Base64;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -79,13 +80,14 @@ public class PullDataThread extends Thread{
                    }
                });
 
-                out.write(("REQUEST LABELS" + endSplitter).getBytes(Charset.forName("UTF-8")));
-                String labels = waitForMessage();
-                labels = labels.substring(0, labels.length() - 3);
+                out.write((toBase64("REQUEST LABELS") + endSplitter).getBytes(Charset.forName("UTF-8")));
+                String fullLabelsMessage = waitForMessage();
 
-                int version = Integer.parseInt(labels.split(":::")[0]);
+                int version = Integer.parseInt(fullLabelsMessage.split(":::")[0]);
                 if(version >= mainActivity.minVersionNum){
-                    mainActivity.labels = labels.split(":::")[1];
+                    String labels = fullLabelsMessage.split(":::")[1];
+                    String decodedLabels = new String(Base64.decode(labels, Base64.DEFAULT), Charset.forName("UTF-8"));
+                    mainActivity.labels = decodedLabels;
                 }else{
                     //send toast saying that the client has a version too old
                     mainActivity.runOnUiThread(new Thread(){
@@ -109,49 +111,54 @@ public class PullDataThread extends Thread{
                 //the string that will contain the scout schedule data to send to the client
                 StringBuilder scheduleMessage = new StringBuilder("SEND SCHEDULE:::");
 
+                StringBuilder userSchedule = new StringBuilder();
                 for (int scoutIndex = 0; scoutIndex < mainActivity.assignedRobots.size(); scoutIndex++) {
-                    scheduleMessage.append(mainActivity.allScouts.get(scoutIndex).name);
+                    userSchedule.append(mainActivity.allScouts.get(scoutIndex).name);
 
                     //add separator
-                    scheduleMessage.append(":");
+                    userSchedule.append(":");
 
                     for (int i = 0 ; i < mainActivity.assignedRobots.get(scoutIndex).length; i++) {
-                        scheduleMessage.append(mainActivity.assignedRobots.get(scoutIndex)[i]);
+                        userSchedule.append(mainActivity.assignedRobots.get(scoutIndex)[i]);
 
                         if (i < mainActivity.assignedRobots.get(scoutIndex).length - 1) {
                             //add a comma, it's not the last item
-                            scheduleMessage.append(",");
+                            userSchedule.append(",");
                         }
                     }
 
                     if (scoutIndex < mainActivity.assignedRobots.size() - 1) {
                         //add a separator, it's not the last item
-                        scheduleMessage.append("::");
+                        userSchedule.append("::");
                     }
                 }
 
                 //send the robot schedule
-                scheduleMessage.append(":::");
+                StringBuilder robotSchedule = new StringBuilder();
 
                 for (int i = 0; i < mainActivity.robotSchedule.size(); i++) {
                     for (int s = 0; s < mainActivity.robotSchedule.get(i).size(); s++) {
-                        scheduleMessage.append(mainActivity.robotSchedule.get(i).get(s));
+                        robotSchedule.append(mainActivity.robotSchedule.get(i).get(s));
 
                         if (s < mainActivity.robotSchedule.get(i).size() - 1) {
                             //add a comma, it's not the last item
-                            scheduleMessage.append(",");
+                            robotSchedule.append(",");
                         }
                     }
                     if (i < mainActivity.robotSchedule.size() - 1) {
                         //add a separator, it's not the last item
-                        scheduleMessage.append("::");
+                        robotSchedule.append("::");
                     }
                 }
 
-                //this message has finished
-                scheduleMessage.append(endSplitter);
+                //this message has finished, add everything together
+                scheduleMessage.append(Base64.encodeToString(userSchedule.toString().getBytes(Charset.forName("UTF-8")), Base64.DEFAULT));
+                scheduleMessage.append(":::");
+                scheduleMessage.append(Base64.encodeToString(robotSchedule.toString().getBytes(Charset.forName("UTF-8")), Base64.DEFAULT));
 
-                out.write(scheduleMessage.toString().getBytes(Charset.forName("UTF-8")));
+                String finalMessage = toBase64(scheduleMessage.toString()) + endSplitter;
+
+                out.write(finalMessage.getBytes(Charset.forName("UTF-8")));
                 String receivedMessage = waitForMessage();
 
                 if (!receivedMessage.contains("RECEIVED")) {
@@ -166,10 +173,8 @@ public class PullDataThread extends Thread{
                 }
             });
 
-            out.write(("REQUEST DATA" + endSplitter).getBytes(Charset.forName("UTF-8")));
+            out.write((toBase64("REQUEST DATA") + endSplitter).getBytes(Charset.forName("UTF-8")));
             String message = waitForMessage();
-
-            message = message.substring(0, message.length() - 3);
 
             mainActivity.runOnUiThread(new Thread() {
                 public void run() {
@@ -198,7 +203,10 @@ public class PullDataThread extends Thread{
                     });
                 }else{
                     for(int i = 0; i < data.length; i++){
-                        if(mainActivity.stringListContains(mainActivity.uuids, mainActivity.getUUIDFromData(data[i]))){
+                        String matchData = data[i];
+                        String decodedMatchData = new String(Base64.decode(matchData, Base64.DEFAULT), Charset.forName("UTF-8"));
+
+                        if(mainActivity.stringListContains(mainActivity.uuids, mainActivity.getUUIDFromData(decodedMatchData))){
                             //send toast saying that the data already exists
                             mainActivity.runOnUiThread(new Thread(){
                                 public void run(){
@@ -209,14 +217,14 @@ public class PullDataThread extends Thread{
                             //don't save the data
                             continue;
                         }
-                        mainActivity.save(data[i], mainActivity.labels);
-                        mainActivity.uuids.add(data[i]);
+                        mainActivity.save(decodedMatchData, mainActivity.labels);
+                        mainActivity.uuids.add(decodedMatchData);
                     }
                 }
 
             }
 
-            out.write(("RECEIVED" + endSplitter).getBytes(Charset.forName("UTF-8")));
+            out.write((toBase64("RECEIVED") + endSplitter).getBytes(Charset.forName("UTF-8")));
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -286,15 +294,24 @@ public class PullDataThread extends Thread{
             else continue;
 
             String message = finalMessage + new String(bytes, Charset.forName("UTF-8"));
-            if(!message.endsWith("")){
+            if(!message.endsWith(endSplitter)){
                 finalMessage = message;
                 continue;
             }
 
-            return message;
+            message = message.substring(0, message.length() - endSplitter.length());
+
+            //convert message out of base 64
+            String decodedMessage = new String(Base64.decode(message, Base64.DEFAULT), Charset.forName("UTF-8"));
+
+            return decodedMessage;
         }
 
         return null;
+    }
+
+    public String toBase64(String string) {
+        return Base64.encodeToString(string.getBytes(Charset.forName("UTF-8")), Base64.DEFAULT);
     }
 
     public void onDestroy() throws IOException {

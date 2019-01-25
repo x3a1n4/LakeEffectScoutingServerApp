@@ -11,6 +11,7 @@ import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Base64;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -29,6 +30,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -1136,6 +1138,7 @@ public class MainActivity extends AppCompatActivity {
         File file = new File(sdCard.getPath() + "/#ScoutingData/EventData/" + data.split(":")[0] + ".csv");
 
         data = data.replace(data.split(":")[0] + ":" + data.split(":")[1] + ":", "");
+        data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
 
         if (data.equals("") || data.equals("\n")) {
             return;
@@ -1180,6 +1183,9 @@ public class MainActivity extends AppCompatActivity {
         if(data.split(":").length >= 2){
             //there are events
             data = data.replace(":" + data.split(":")[1], "");
+
+            //decode data from base 64
+            data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
         }
 
         System.out.println(data);
@@ -1198,14 +1204,6 @@ public class MainActivity extends AppCompatActivity {
 
             if(newfile) out.write(labels);
             out.write(data);
-
-//            runOnUiThread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    Toast.makeText(MainActivity.this, "Saved",
-//                            Toast.LENGTH_LONG).show();
-//                }
-//            });
 
             out.close();
             f.close();
