@@ -1253,8 +1253,11 @@ public class MainActivity extends AppCompatActivity {
         File file = new File(sdCard.getPath() + "/#ScoutingData/EventData/" + data.split(":")[0] + ".csv");
 
         data = data.replace(data.split(":")[0] + ":" + data.split(":")[1] + ":", "");
-        data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
-
+        try {
+            data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
+        } catch (IllegalArgumentException e){
+            return;
+        }
         if (data.equals("") || data.equals("\n")) {
             return;
         }
@@ -1300,7 +1303,11 @@ public class MainActivity extends AppCompatActivity {
             data = data.replace(":" + data.split(":")[1], "");
 
             //decode data from base 64
-            data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
+            try {
+                data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
+            } catch (IllegalArgumentException e){
+                return;
+            }
         }
 
         System.out.println(data);
