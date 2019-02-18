@@ -1243,50 +1243,83 @@ public class MainActivity extends AppCompatActivity {
 
     public void saveEvents(String data) {
 
-        if(data.split(":").length < 2){
+        if(data.split(":").length <= 2){
             //there are no events
             return;
         }
 
         File sdCard = Environment.getExternalStorageDirectory();
 
-        File file = new File(sdCard.getPath() + "/#ScoutingData/EventData/" + data.split(":")[0] + ".csv");
+        File autoFile = new File(sdCard.getPath() + "/#ScoutingData/AutoEventData/" + data.split(":")[0] + ".csv");
+        File teleOpFile = new File(sdCard.getPath() + "/#ScoutingData/EventData/" + data.split(":")[0] + ".csv");
 
         data = data.replace(data.split(":")[0] + ":" + data.split(":")[1] + ":", "");
-        try {
-            data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
-        } catch (IllegalArgumentException e){
-            runOnUiThread(new Thread() {
-                public void run() {
-                    Toast.makeText(MainActivity.this, "Base 64 failed to decode", Toast.LENGTH_LONG).show();
+        String autoData = Base64Encoder.decode(data.split(":")[0]);
+        String teleOpData = "nodata";
+        if(data.split(":").length >= 2){
+            //there is teleOpData
+            teleOpData = Base64Encoder.decode(data.split(":")[1]);
+        }
+
+        //check if base 64 decode failed
+            if (autoData == null || teleOpData == null) {
+                if (autoData == null) {
+                    autoData = "Base 64 failed to decode. Base 64: " + data.split(":")[0];
+                } else {
+                    teleOpData = "Base 64 failed to decode. Base 64: " + data.split(":")[1];
                 }
-            });
-            return;
-        }
-        if (data.equals("") || data.equals("\n")) {
-            return;
-        }
-
-        if (data.endsWith("\n")) {
-            data = data.substring(0, data.length() - 1);
-        }
-
-        try {
-            boolean newfile = false;
-            file.getParentFile().mkdirs();
-            if (!file.exists()) {
-                file.createNewFile();
-                newfile = true;
+                runOnUiThread(new Thread() {
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "Base 64 failed to decode in saveEvents()", Toast.LENGTH_LONG).show();
+                    }
+                });
             }
 
-            FileOutputStream f = new FileOutputStream(file, true);
+        if (autoData.endsWith("\n")) {
+            autoData = autoData.substring(0, autoData.length() - 1);
+        }
+        if (teleOpData.endsWith("\n")) {
+            teleOpData = teleOpData.substring(0, teleOpData.length() - 1);
+        }
 
-            OutputStreamWriter out = new OutputStreamWriter(f);
+        try {
+            //save auto data
+            if (!autoData.equals("nodata")) {
+                boolean newfile = false;
+                autoFile.getParentFile().mkdirs();
+                if (!autoFile.exists()) {
+                    autoFile.createNewFile();
+                    newfile = true;
+                }
 
-            out.write(data + "\n");
+                FileOutputStream f = new FileOutputStream(autoFile, true);
 
-            out.close();
-            f.close();
+                OutputStreamWriter out = new OutputStreamWriter(f);
+
+                out.write(autoData + "\n");
+
+                out.close();
+                f.close();
+            }
+
+            //save teleop data
+            if (!teleOpData.equals("nodata")) {
+                boolean newfile = false;
+                teleOpFile.getParentFile().mkdirs();
+                if (!teleOpFile.exists()) {
+                    teleOpFile.createNewFile();
+                    newfile = true;
+                }
+
+                FileOutputStream f = new FileOutputStream(teleOpFile, true);
+
+                OutputStreamWriter out = new OutputStreamWriter(f);
+
+                out.write(teleOpData + "\n");
+
+                out.close();
+                f.close();
+            }
         }catch(IOException e){
             e.printStackTrace();
         }
@@ -1308,12 +1341,14 @@ public class MainActivity extends AppCompatActivity {
             data = data.replace(":" + data.split(":")[1], "");
 
             //decode data from base 64
-            try {
-                data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
-            } catch (IllegalArgumentException e){
+            String originalData = data;
+            data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
+
+            if (data == null) {
+                data = "Base 64 failed to decode. Base 64: " + originalData;
                 runOnUiThread(new Thread() {
                     public void run() {
-                        Toast.makeText(MainActivity.this, "Base 64 failed to decode", Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this, "Base 64 failed to decode in save()", Toast.LENGTH_LONG).show();
                     }
                 });
                 return;
