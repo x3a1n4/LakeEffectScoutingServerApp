@@ -1256,6 +1256,11 @@ public class MainActivity extends AppCompatActivity {
         try {
             data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
         } catch (IllegalArgumentException e){
+            runOnUiThread(new Thread() {
+                public void run() {
+                    Toast.makeText(MainActivity.this, "Base 64 failed to decode", Toast.LENGTH_LONG).show();
+                }
+            });
             return;
         }
         if (data.equals("") || data.equals("\n")) {
@@ -1306,6 +1311,11 @@ public class MainActivity extends AppCompatActivity {
             try {
                 data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
             } catch (IllegalArgumentException e){
+                runOnUiThread(new Thread() {
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "Base 64 failed to decode", Toast.LENGTH_LONG).show();
+                    }
+                });
                 return;
             }
         }

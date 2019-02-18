@@ -87,6 +87,16 @@ public class PullDataThread extends Thread{
                 if(version >= mainActivity.minVersionNum){
                     String labels = fullLabelsMessage.split(":::")[1];
                     String decodedLabels = Base64Encoder.decode(labels);
+
+                    if (decodedLabels == null) {
+                        decodedLabels = "Failed to decode labels from " + device.getName() + ". Base 64: '" + labels + "'";;
+                        mainActivity.runOnUiThread(new Thread() {
+                            public void run() {
+                                Toast.makeText(mainActivity, "Failed to decode labels from " + device.getName(), Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+
                     mainActivity.labels = decodedLabels;
                 }else{
                     //send toast saying that the client has a version too old
@@ -205,6 +215,16 @@ public class PullDataThread extends Thread{
                     for(int i = 0; i < data.length; i++){
                         String matchData = data[i];
                         String decodedMatchData = Base64Encoder.decode(matchData);
+
+                        if (decodedMatchData == null) {
+                            decodedMatchData = "Failed to decode match data from " + device.getName() + ". Base 64: '" + matchData + "'";
+                            mainActivity.runOnUiThread(new Thread() {
+                                public void run() {
+                                    Toast.makeText(mainActivity, "Failed to decode match data from " + device.getName(), Toast.LENGTH_LONG).show();
+                                }
+                            });
+                        }
+
                         if(mainActivity.stringListContains(mainActivity.uuids, mainActivity.getUUIDFromData(decodedMatchData))){
                             //send toast saying that the data already exists
                             mainActivity.runOnUiThread(new Thread(){
@@ -302,6 +322,15 @@ public class PullDataThread extends Thread{
 
             //convert message out of base 64
             String decodedMessage = Base64Encoder.decode(message);
+
+            if (decodedMessage == null) {
+                decodedMessage = "Failed to decode message from " + device.getName() + ". Base 64: '" + message + "'";;
+                mainActivity.runOnUiThread(new Thread() {
+                    public void run() {
+                        Toast.makeText(mainActivity, "Failed to decode message from " + device.getName(), Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
 
             return decodedMessage;
         }
