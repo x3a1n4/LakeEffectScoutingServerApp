@@ -86,7 +86,17 @@ public class PullDataThread extends Thread{
                 int version = Integer.parseInt(fullLabelsMessage.split(":::")[0]);
                 if(version >= mainActivity.minVersionNum){
                     String labels = fullLabelsMessage.split(":::")[1];
-                    String decodedLabels = new String(Base64.decode(labels, Base64.DEFAULT), Charset.forName("UTF-8"));
+                    String decodedLabels = Base64Encoder.decode(labels);
+
+                    if (decodedLabels == null) {
+                        decodedLabels = "Failed to decode labels from " + device.getName() + ". Base 64: '" + labels + "'";;
+                        mainActivity.runOnUiThread(new Thread() {
+                            public void run() {
+                                Toast.makeText(mainActivity, "Failed to decode labels from " + device.getName(), Toast.LENGTH_LONG).show();
+                            }
+                        });
+                    }
+
                     mainActivity.labels = decodedLabels;
                 }else{
                     //send toast saying that the client has a version too old
@@ -204,7 +214,16 @@ public class PullDataThread extends Thread{
                 }else{
                     for(int i = 0; i < data.length; i++){
                         String matchData = data[i];
-                        String decodedMatchData = new String(Base64.decode(matchData, Base64.DEFAULT), Charset.forName("UTF-8"));
+                        String decodedMatchData = Base64Encoder.decode(matchData);
+
+                        if (decodedMatchData == null) {
+                            decodedMatchData = "Failed to decode match data from " + device.getName() + ". Base 64: '" + matchData + "'";
+                            mainActivity.runOnUiThread(new Thread() {
+                                public void run() {
+                                    Toast.makeText(mainActivity, "Failed to decode match data from " + device.getName(), Toast.LENGTH_LONG).show();
+                                }
+                            });
+                        }
 
                         if(mainActivity.stringListContains(mainActivity.uuids, mainActivity.getUUIDFromData(decodedMatchData))){
                             //send toast saying that the data already exists
@@ -302,7 +321,16 @@ public class PullDataThread extends Thread{
             message = message.substring(0, message.length() - endSplitter.length());
 
             //convert message out of base 64
-            String decodedMessage = new String(Base64.decode(message, Base64.DEFAULT), Charset.forName("UTF-8"));
+            String decodedMessage = Base64Encoder.decode(message);
+
+            if (decodedMessage == null) {
+                decodedMessage = "Failed to decode message from " + device.getName() + ". Base 64: '" + message + "'";;
+                mainActivity.runOnUiThread(new Thread() {
+                    public void run() {
+                        Toast.makeText(mainActivity, "Failed to decode message from " + device.getName(), Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
 
             return decodedMessage;
         }

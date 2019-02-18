@@ -1254,16 +1254,26 @@ public class MainActivity extends AppCompatActivity {
         File teleOpFile = new File(sdCard.getPath() + "/#ScoutingData/EventData/" + data.split(":")[0] + ".csv");
 
         data = data.replace(data.split(":")[0] + ":" + data.split(":")[1] + ":", "");
-        String autoData = new String(Base64.decode(data.split(":")[0], Base64.DEFAULT), Charset.forName("UTF-8"));
+        String autoData = Base64Encoder.decode(data.split(":")[0]);
         String teleOpData = "nodata";
         if(data.split(":").length >= 2){
             //there is teleOpData
-            teleOpData = new String(Base64.decode(data.split(":")[1], Base64.DEFAULT), Charset.forName("UTF-8"));
+            teleOpData = Base64Encoder.decode(data.split(":")[1]);
         }
 
-//        if (data.equals("") || data.equals("\n")) {
-//            return;
-//        }
+        //check if base 64 decode failed
+            if (autoData == null || teleOpData == null) {
+                if (autoData == null) {
+                    autoData = "Base 64 failed to decode. Base 64: " + data.split(":")[0];
+                } else {
+                    teleOpData = "Base 64 failed to decode. Base 64: " + data.split(":")[1];
+                }
+                runOnUiThread(new Thread() {
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "Base 64 failed to decode in saveEvents()", Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
 
         if (autoData.endsWith("\n")) {
             autoData = autoData.substring(0, autoData.length() - 1);
@@ -1331,7 +1341,18 @@ public class MainActivity extends AppCompatActivity {
             data = data.replace(":" + data.split(":")[1], "");
 
             //decode data from base 64
+            String originalData = data;
             data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
+
+            if (data == null) {
+                data = "Base 64 failed to decode. Base 64: " + originalData;
+                runOnUiThread(new Thread() {
+                    public void run() {
+                        Toast.makeText(MainActivity.this, "Base 64 failed to decode in save()", Toast.LENGTH_LONG).show();
+                    }
+                });
+                return;
+            }
         }
 
         System.out.println(data);
