@@ -1243,42 +1243,73 @@ public class MainActivity extends AppCompatActivity {
 
     public void saveEvents(String data) {
 
-        if(data.split(":").length < 2){
+        if(data.split(":").length <= 2){
             //there are no events
             return;
         }
 
         File sdCard = Environment.getExternalStorageDirectory();
 
-        File file = new File(sdCard.getPath() + "/#ScoutingData/EventData/" + data.split(":")[0] + ".csv");
+        File autoFile = new File(sdCard.getPath() + "/#ScoutingData/AutoEventData/" + data.split(":")[0] + ".csv");
+        File teleOpFile = new File(sdCard.getPath() + "/#ScoutingData/EventData/" + data.split(":")[0] + ".csv");
 
         data = data.replace(data.split(":")[0] + ":" + data.split(":")[1] + ":", "");
-        data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
-
-        if (data.equals("") || data.equals("\n")) {
-            return;
+        String autoData = new String(Base64.decode(data.split(":")[0], Base64.DEFAULT), Charset.forName("UTF-8"));
+        String teleOpData = "nodata";
+        if(data.split(":").length >= 2){
+            //there is teleOpData
+            teleOpData = new String(Base64.decode(data.split(":")[1], Base64.DEFAULT), Charset.forName("UTF-8"));
         }
 
-        if (data.endsWith("\n")) {
-            data = data.substring(0, data.length() - 1);
+//        if (data.equals("") || data.equals("\n")) {
+//            return;
+//        }
+
+        if (autoData.endsWith("\n")) {
+            autoData = autoData.substring(0, autoData.length() - 1);
+        }
+        if (teleOpData.endsWith("\n")) {
+            teleOpData = teleOpData.substring(0, teleOpData.length() - 1);
         }
 
         try {
-            boolean newfile = false;
-            file.getParentFile().mkdirs();
-            if (!file.exists()) {
-                file.createNewFile();
-                newfile = true;
+            //save auto data
+            if (!autoData.equals("nodata")) {
+                boolean newfile = false;
+                autoFile.getParentFile().mkdirs();
+                if (!autoFile.exists()) {
+                    autoFile.createNewFile();
+                    newfile = true;
+                }
+
+                FileOutputStream f = new FileOutputStream(autoFile, true);
+
+                OutputStreamWriter out = new OutputStreamWriter(f);
+
+                out.write(autoData + "\n");
+
+                out.close();
+                f.close();
             }
 
-            FileOutputStream f = new FileOutputStream(file, true);
+            //save teleop data
+            if (!teleOpData.equals("nodata")) {
+                boolean newfile = false;
+                teleOpFile.getParentFile().mkdirs();
+                if (!teleOpFile.exists()) {
+                    teleOpFile.createNewFile();
+                    newfile = true;
+                }
 
-            OutputStreamWriter out = new OutputStreamWriter(f);
+                FileOutputStream f = new FileOutputStream(teleOpFile, true);
 
-            out.write(data + "\n");
+                OutputStreamWriter out = new OutputStreamWriter(f);
 
-            out.close();
-            f.close();
+                out.write(teleOpData + "\n");
+
+                out.close();
+                f.close();
+            }
         }catch(IOException e){
             e.printStackTrace();
         }
