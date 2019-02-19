@@ -244,7 +244,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         for(String line: data){
-            uuids.add(getUUIDFromData(line));
+            uuids.add(getUUIDFromData(line, false));
         }
 
         //load names
@@ -1185,13 +1185,39 @@ public class MainActivity extends AppCompatActivity {
         return "";
     }
 
-    public String getUUIDFromData(final String data){
-        String[] dataArray = data.split(",");
+    public String getUUIDFromData(String data, boolean encodedInBase64){
+
+        final String decodedMatchData;
+        if (encodedInBase64) {
+            data = data.replace(data.split(":")[0] + ":", "");
+
+            if(data.split(":").length >= 2) {
+                //there are events
+                data = data.replace(":" + data.split(":")[1], "");
+            }
+
+            final String encodedData = data;
+            decodedMatchData = Base64Encoder.decode(data);
+
+            if (decodedMatchData == null) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(), "Your base 64 is broken when getting the UUID. Base 64: " + encodedData, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+
+        } else {
+            decodedMatchData = data;
+        }
+
+        String[] dataArray = decodedMatchData.split(",");
         if(dataArray.length <= 2){
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Toast.makeText(getApplicationContext(), "Your data is broken, the amount of commas is too small in " + data, Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Your data is broken, the amount of commas is too small in " + decodedMatchData, Toast.LENGTH_LONG).show();
                 }
             });
             return "null";

@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -225,7 +224,7 @@ public class PullDataThread extends Thread{
                             });
                         }
 
-                        if(mainActivity.stringListContains(mainActivity.uuids, mainActivity.getUUIDFromData(decodedMatchData))){
+                        if(mainActivity.stringListContains(mainActivity.uuids, mainActivity.getUUIDFromData(decodedMatchData, true))){
                             //send toast saying that the data already exists
                             mainActivity.runOnUiThread(new Thread(){
                                 public void run(){
