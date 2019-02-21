@@ -187,6 +187,16 @@ public class MainActivity extends AppCompatActivity {
                 editor.putInt("switchMatchesSize", targetTimeOff.switchMatches.size());
                 editor.apply();
 
+                //update schedule
+                final String success = createSchedule();
+                if (success != null) {
+                    runOnUiThread(new Thread(){
+                        public void run() {
+                            Toast.makeText(MainActivity.this, success, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
                 runOnUiThread(new Thread(){
                     public void run() {
                         Toast.makeText(MainActivity.this, "Added new time off", Toast.LENGTH_SHORT).show();
