@@ -16,10 +16,10 @@ import java.util.UUID;
 
 /**
  * Created by Ajay on 10/15/2017.
- *
+ * <p>
  * Class that deals with pulling the data, this class should not be able to be called multiple times
  */
-public class PullDataThread extends Thread{
+public class PullDataThread extends Thread {
 
     boolean running = false;
 
@@ -38,7 +38,7 @@ public class PullDataThread extends Thread{
 
     final String endSplitter = "{e}";
 
-    public PullDataThread(MainActivity mainActivity, BluetoothDevice bluetoothDevice, View deviceMenu){
+    public PullDataThread(MainActivity mainActivity, BluetoothDevice bluetoothDevice, View deviceMenu) {
         this.mainActivity = mainActivity;
         this.device = bluetoothDevice;
         this.deviceMenu = deviceMenu;
@@ -72,23 +72,24 @@ public class PullDataThread extends Thread{
             in = bluetoothSocket.getInputStream();
             out = bluetoothSocket.getOutputStream();
 
-            if(mainActivity.labels == null){
+            if (mainActivity.labels == null) {
                 mainActivity.runOnUiThread(new Thread() {
-                   public void run() {
-                       mainActivity.status.setText("Connected! Requesting Labels from " + device.getName() + "...");
-                   }
-               });
+                    public void run() {
+                        mainActivity.status.setText("Connected! Requesting Labels from " + device.getName() + "...");
+                    }
+                });
 
                 out.write((toBase64("REQUEST LABELS") + endSplitter).getBytes(Charset.forName("UTF-8")));
                 String fullLabelsMessage = waitForMessage();
 
                 int version = Integer.parseInt(fullLabelsMessage.split(":::")[0]);
-                if(version >= mainActivity.minVersionNum){
+                if (version >= mainActivity.minVersionNum) {
                     String labels = fullLabelsMessage.split(":::")[1];
                     String decodedLabels = Base64Encoder.decode(labels);
 
                     if (decodedLabels == null) {
-                        decodedLabels = "Failed to decode labels from " + device.getName() + ". Base 64: '" + labels + "'";;
+                        decodedLabels = "Failed to decode labels from " + device.getName() + ". Base 64: '" + labels + "'";
+                        ;
                         mainActivity.runOnUiThread(new Thread() {
                             public void run() {
                                 Toast.makeText(mainActivity, "Failed to decode labels from " + device.getName(), Toast.LENGTH_LONG).show();
@@ -97,10 +98,10 @@ public class PullDataThread extends Thread{
                     }
 
                     mainActivity.labels = decodedLabels;
-                }else{
+                } else {
                     //send toast saying that the client has a version too old
-                    mainActivity.runOnUiThread(new Thread(){
-                        public void run(){
+                    mainActivity.runOnUiThread(new Thread() {
+                        public void run() {
                             Toast.makeText(mainActivity, "The Scouting App on the device you connected too is too old, either tell them to update or change the minimum version number", Toast.LENGTH_LONG).show();
                         }
                     });
@@ -127,7 +128,7 @@ public class PullDataThread extends Thread{
                     //add separator
                     userSchedule.append(":");
 
-                    for (int i = 0 ; i < mainActivity.assignedRobots.get(scoutIndex).length; i++) {
+                    for (int i = 0; i < mainActivity.assignedRobots.get(scoutIndex).length; i++) {
                         userSchedule.append(mainActivity.assignedRobots.get(scoutIndex)[i]);
 
                         if (i < mainActivity.assignedRobots.get(scoutIndex).length - 1) {
@@ -187,31 +188,31 @@ public class PullDataThread extends Thread{
 
             mainActivity.runOnUiThread(new Thread() {
                 public void run() {
-                mainActivity.status.setText("Connected! Saving Data from " + device.getName() + "...");
+                    mainActivity.status.setText("Connected! Saving Data from " + device.getName() + "...");
                 }
             });
 
             int version = Integer.parseInt(message.split(":::")[0]);
-            if(version < mainActivity.minVersionNum){
+            if (version < mainActivity.minVersionNum) {
                 //send toast saying that the client has a version too old
-                mainActivity.runOnUiThread(new Thread(){
-                    public void run(){
+                mainActivity.runOnUiThread(new Thread() {
+                    public void run() {
                         Toast.makeText(mainActivity, "The Scouting App on the device you connected too is too old, either tell them to update or change the minimum version number", Toast.LENGTH_LONG).show();
                     }
                 });
-                    running = false;
-                    return;
+                running = false;
+                return;
             } else {
                 String[] data = message.split(":::")[1].split("::");
 
-                if(data[0].equals("nodata")){
+                if (data[0].equals("nodata")) {
                     mainActivity.runOnUiThread(new Thread() {
                         public void run() {
                             mainActivity.status.setText("Connected! " + device.getName() + " has no data to send...");
                         }
                     });
-                }else{
-                    for(int i = 0; i < data.length; i++){
+                } else {
+                    for (int i = 0; i < data.length; i++) {
                         String matchData = data[i];
                         String decodedMatchData = Base64Encoder.decode(matchData);
 
@@ -224,10 +225,10 @@ public class PullDataThread extends Thread{
                             });
                         }
 
-                        if(mainActivity.stringListContains(mainActivity.uuids, mainActivity.getUUIDFromData(decodedMatchData, true))){
+                        if (mainActivity.stringListContains(mainActivity.uuids, mainActivity.getUUIDFromData(decodedMatchData, true))) {
                             //send toast saying that the data already exists
-                            mainActivity.runOnUiThread(new Thread(){
-                                public void run(){
+                            mainActivity.runOnUiThread(new Thread() {
+                                public void run() {
                                     Toast.makeText(mainActivity, "Duplicate data detected and removed", Toast.LENGTH_LONG).show();
                                 }
                             });
@@ -292,14 +293,14 @@ public class PullDataThread extends Thread{
         running = false;
 
         mainActivity.pullDataThreads.remove(this);
-        if(mainActivity.pullDataThreads.size() > 0){
+        if (mainActivity.pullDataThreads.size() > 0) {
             new Thread(mainActivity.pullDataThreads.get(0)).start();
         }
     }
 
-    public String waitForMessage(){
+    public String waitForMessage() {
         String finalMessage = "";
-        while(out != null && in != null && bluetoothSocket.isConnected()){
+        while (out != null && in != null && bluetoothSocket.isConnected()) {
             byte[] bytes = new byte[100000];
             int amount = 0;
             try {
@@ -308,11 +309,12 @@ public class PullDataThread extends Thread{
                 e.printStackTrace();
             }
 
-            if(amount>0)  bytes = Arrays.copyOfRange(bytes, 0, amount);//puts data into bytes and cuts bytes
+            if (amount > 0)
+                bytes = Arrays.copyOfRange(bytes, 0, amount);//puts data into bytes and cuts bytes
             else continue;
 
             String message = finalMessage + new String(bytes, Charset.forName("UTF-8"));
-            if(!message.endsWith(endSplitter)){
+            if (!message.endsWith(endSplitter)) {
                 finalMessage = message;
                 continue;
             }
@@ -323,7 +325,8 @@ public class PullDataThread extends Thread{
             String decodedMessage = Base64Encoder.decode(message);
 
             if (decodedMessage == null) {
-                decodedMessage = "Failed to decode message from " + device.getName() + ". Base 64: '" + message + "'";;
+                decodedMessage = "Failed to decode message from " + device.getName() + ". Base 64: '" + message + "'";
+
                 mainActivity.runOnUiThread(new Thread() {
                     public void run() {
                         Toast.makeText(mainActivity, "Failed to decode message from " + device.getName(), Toast.LENGTH_LONG).show();
@@ -342,8 +345,8 @@ public class PullDataThread extends Thread{
     }
 
     public void onDestroy() throws IOException {
-        if(in!=null) in.close();
-        if(out!=null) out.close();
-        if(bluetoothSocket!=null) bluetoothSocket.close();
+        if (in != null) in.close();
+        if (out != null) out.close();
+        if (bluetoothSocket != null) bluetoothSocket.close();
     }
 }

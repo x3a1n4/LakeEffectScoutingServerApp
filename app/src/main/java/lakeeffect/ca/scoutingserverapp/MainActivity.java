@@ -11,7 +11,6 @@ import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Base64;
 import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -30,7 +29,6 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -186,6 +184,16 @@ public class MainActivity extends AppCompatActivity {
                 editor.putInt("targetTimeOffSize", targetTimeOff.targetTimeOff.size());
                 editor.putInt("switchMatchesSize", targetTimeOff.switchMatches.size());
                 editor.apply();
+
+                //update schedule
+                final String success = createSchedule();
+                if (success != null) {
+                    runOnUiThread(new Thread(){
+                        public void run() {
+                            Toast.makeText(MainActivity.this, success, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
 
                 runOnUiThread(new Thread(){
                     public void run() {
@@ -1193,7 +1201,13 @@ public class MainActivity extends AppCompatActivity {
 
             if(data.split(":").length >= 2) {
                 //there are events
-                data = data.replace(":" + data.split(":")[1], "");
+                if (data.split(":").length >= 3) {
+                    //there are tele and auto events
+                    data = data.replace(":" + data.split(":")[1] + ":" + data.split(":")[2], "");
+                    System.out.println(data);
+                } else {
+                    data = data.replace(":" + data.split(":")[1], "");
+                }
             }
 
             final String encodedData = data;
@@ -1222,7 +1236,8 @@ public class MainActivity extends AppCompatActivity {
             });
             return "null";
         }
-        return dataArray[dataArray.length-2];
+
+        return dataArray[dataArray.length - 1];
 
     }
 
@@ -1288,18 +1303,18 @@ public class MainActivity extends AppCompatActivity {
         }
 
         //check if base 64 decode failed
-            if (autoData == null || teleOpData == null) {
-                if (autoData == null) {
-                    autoData = "Base 64 failed to decode. Base 64: " + data.split(":")[0];
-                } else {
-                    teleOpData = "Base 64 failed to decode. Base 64: " + data.split(":")[1];
-                }
-                runOnUiThread(new Thread() {
-                    public void run() {
-                        Toast.makeText(MainActivity.this, "Base 64 failed to decode in saveEvents()", Toast.LENGTH_LONG).show();
-                    }
-                });
+        if (autoData == null || teleOpData == null) {
+            if (autoData == null) {
+                autoData = "Base 64 failed to decode. Base 64: " + data.split(":")[0];
+            } else {
+                teleOpData = "Base 64 failed to decode. Base 64: " + data.split(":")[1];
             }
+            runOnUiThread(new Thread() {
+                public void run() {
+                    Toast.makeText(MainActivity.this, "Base 64 failed to decode in saveEvents()", Toast.LENGTH_LONG).show();
+                }
+            });
+        }
 
         if (autoData.endsWith("\n")) {
             autoData = autoData.substring(0, autoData.length() - 1);
@@ -1364,21 +1379,26 @@ public class MainActivity extends AppCompatActivity {
 
         if(data.split(":").length >= 2){
             //there are events
-            data = data.replace(":" + data.split(":")[1], "");
-
-            //decode data from base 64
-            String originalData = data;
-            data = new String(Base64.decode(data, Base64.DEFAULT), Charset.forName("UTF-8"));
-
-            if (data == null) {
-                data = "Base 64 failed to decode. Base 64: " + originalData;
-                runOnUiThread(new Thread() {
-                    public void run() {
-                        Toast.makeText(MainActivity.this, "Base 64 failed to decode in save()", Toast.LENGTH_LONG).show();
-                    }
-                });
-                return;
+            if (data.split(":").length >= 3) {
+                //there are tele and auto events
+                data = data.replace(":" + data.split(":")[1] + ":" + data.split(":")[2], "");
+                System.out.println(data);
+            } else {
+                data = data.replace(":" + data.split(":")[1], "");
             }
+        }
+
+        //decode data from base 64
+        String originalData = data;
+        data = Base64Encoder.decode(data);
+
+        if (data == null) {
+            data = "Base 64 failed to decode. Base 64: " + originalData;
+            runOnUiThread(new Thread() {
+                public void run() {
+                    Toast.makeText(MainActivity.this, "Base 64 failed to decode in save()", Toast.LENGTH_LONG).show();
+                }
+            });
         }
 
         System.out.println(data);
