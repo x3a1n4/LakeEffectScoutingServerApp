@@ -711,6 +711,29 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
+            checkBox.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(final View v) {
+                    final EditText newName = new EditText(MainActivity.this);
+                    newName.setText(scout.name);
+
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Please enter the new name")
+                            .setNegativeButton("Cancel", null)
+                            .setPositiveButton("Set", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    scout.name = newName.getText().toString();
+                                    ((CheckBox) v).setText(scout.name);
+
+                                    updateNames();
+                                }
+                            })
+                            .setView(newName)
+                            .show();
+                    return false;
+                }
+            });
 
             //set close action
             view.findViewById(R.id.nameClose).setOnClickListener(new View.OnClickListener() {
