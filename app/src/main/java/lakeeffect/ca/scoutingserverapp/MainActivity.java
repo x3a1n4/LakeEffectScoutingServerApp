@@ -687,75 +687,8 @@ public class MainActivity extends AppCompatActivity {
         //get match number view
         final TextView currentMatchNumber = ((TextView) addName.findViewById(R.id.currentMatchNumber));
 
-        //add checkbox and close button for each username
-        for (int i = 0; i < allScouts.size(); i++) {
-            final View view = View.inflate(this, R.layout.closable_checkbox, null);
-
-            CheckBox checkBox = ((CheckBox) view.findViewById(R.id.nameCheckBox));
-
-            final Scout scout = allScouts.get(i);
-            scout.view = view;
-
-            checkBox.setText(scout.name);
-
-            //if it is selected, check the box
-            if (scout.existsAtMatch(robotSchedule.size() - 1)) {
-                checkBox.setChecked(true);
-            }
-
-            //set checkbox onChange listener
-            checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                @Override
-                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    nameClicked(buttonView, isChecked, scout.name, currentMatchNumber);
-                }
-            });
-
-            checkBox.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(final View v) {
-                    final EditText newName = new EditText(MainActivity.this);
-                    newName.setText(scout.name);
-
-                    new AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Please enter the new name")
-                            .setNegativeButton("Cancel", null)
-                            .setPositiveButton("Set", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    scout.name = newName.getText().toString();
-                                    ((CheckBox) v).setText(scout.name);
-
-                                    updateNames();
-                                }
-                            })
-                            .setView(newName)
-                            .show();
-                    return false;
-                }
-            });
-
-            //set close action
-            view.findViewById(R.id.nameClose).setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    createdNames.removeView(view);
-                    allScouts.remove(scout);
-
-                    //a scout was removed
-                    //add the action to the past actions list
-                    pastActions.add(new Action(3, scout, view));
-
-                    if (pastActions.size() > PAST_ACTIONS_MAX) {
-                        pastActions.remove(0);
-                    }
-
-                    updateNames();
-                }
-            });
-
-            createdNames.addView(view);
-        }
+        //create the checkboxes and close buttons
+        createNameSelections(createdNames, currentMatchNumber, fullScrollView);
 
         fullView.addView(createdNames);
 
@@ -896,6 +829,131 @@ public class MainActivity extends AppCompatActivity {
                 .setView(fullScrollView)
                 .setPositiveButton("Ok", null)
                 .show();
+    }
+
+    public void createNameSelections(final LinearLayout createdNames,
+                                     final TextView currentMatchNumber, final ScrollView fullScrollView) {
+        //add checkbox and close button for each username
+        for (int i = 0; i < allScouts.size(); i++) {
+            final View view = View.inflate(this, R.layout.closable_checkbox, null);
+
+            CheckBox checkBox = ((CheckBox) view.findViewById(R.id.nameCheckBox));
+
+            final Scout scout = allScouts.get(i);
+            scout.view = view;
+
+            checkBox.setText(scout.name);
+
+            //if it is selected, check the box
+            if (scout.existsAtMatch(robotSchedule.size() - 1)) {
+                checkBox.setChecked(true);
+            }
+
+            //set checkbox onChange listener
+            checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                @Override
+                public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                    nameClicked(buttonView, isChecked, scout.name, currentMatchNumber);
+                }
+            });
+
+            checkBox.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(final View v) {
+                    final EditText newName = new EditText(MainActivity.this);
+                    newName.setText(scout.name);
+
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle("Please enter the new name")
+                            .setNegativeButton("Cancel", null)
+                            .setPositiveButton("Set", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    scout.name = newName.getText().toString();
+                                    ((CheckBox) v).setText(scout.name);
+
+                                    updateNames();
+                                }
+                            })
+                            .setView(newName)
+                            .show();
+                    return false;
+                }
+            });
+
+            //set close action
+            view.findViewById(R.id.nameClose).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    createdNames.removeView(view);
+                    allScouts.remove(scout);
+
+                    //a scout was removed
+                    //add the action to the past actions list
+                    pastActions.add(new Action(3, scout, view));
+
+                    if (pastActions.size() > PAST_ACTIONS_MAX) {
+                        pastActions.remove(0);
+                    }
+
+                    updateNames();
+                }
+            });
+
+            //set move up action
+            view.findViewById(R.id.moveUp).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Scout currentScout = scout;
+                    View currentView = view;
+
+                    int currentScoutIndex = allScouts.indexOf(scout);
+                    if (currentScoutIndex <= 0) {
+                        return;
+                    }
+
+                    Scout scoutAbove = allScouts.get(currentScoutIndex - 1);
+
+                    //swap them, making the scout selected move up
+                    allScouts.set(currentScoutIndex - 1, scout);
+                    allScouts.set(currentScoutIndex, scoutAbove);
+
+                    updateNames();
+
+                    //reload the UI
+                    createdNames.removeAllViews();
+                    createNameSelections(createdNames, currentMatchNumber, fullScrollView);
+                }
+            });
+
+            //set move down action
+            view.findViewById(R.id.moveDown).setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    Scout currentScout = scout;
+                    View currentView = view;
+
+                    int currentScoutIndex = allScouts.indexOf(scout);
+                    if (currentScoutIndex >= allScouts.size() - 1) {
+                        return;
+                    }
+
+                    Scout scoutBelow = allScouts.get(currentScoutIndex + 1);
+
+                    //swap them, making the scout selected move up
+                    allScouts.set(currentScoutIndex + 1, scout);
+                    allScouts.set(currentScoutIndex, scoutBelow);
+
+                    updateNames();
+
+                    //reload the UI
+                    createdNames.removeAllViews();
+                    createNameSelections(createdNames, currentMatchNumber, fullScrollView);
+                }
+            });
+
+            createdNames.addView(view);
+        }
     }
 
     public void openScheduleViewer() {

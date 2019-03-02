@@ -12,6 +12,20 @@
         android:text="CheckBox" />
 
     <Button
+        android:id="@+id/moveUp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="0dp"
+        android:text="▲" />
+
+    <Button
+        android:id="@+id/moveDown"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="0dp"
+        android:text="▼" />
+
+    <Button
         android:id="@+id/nameClose"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
