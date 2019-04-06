@@ -21,6 +21,9 @@ public class Scout {
     //the match this scout started being on
     int timeOn = 0;
 
+    //the amount of extra shifts this scout has taken
+    int extraShifts = 0;
+
     //matches started on (multiple if they join, then leave, then join)
     ArrayList<Integer> startMatches = new ArrayList<>();
 
