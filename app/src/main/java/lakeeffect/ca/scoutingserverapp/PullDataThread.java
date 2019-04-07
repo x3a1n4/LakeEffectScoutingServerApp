@@ -89,7 +89,7 @@ public class PullDataThread extends Thread {
 
                     if (decodedLabels == null) {
                         decodedLabels = "Failed to decode labels from " + device.getName() + ". Base 64: '" + labels + "'";
-                        ;
+
                         mainActivity.runOnUiThread(new Thread() {
                             public void run() {
                                 Toast.makeText(mainActivity, "Failed to decode labels from " + device.getName(), Toast.LENGTH_LONG).show();
