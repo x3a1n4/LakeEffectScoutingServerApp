@@ -593,12 +593,7 @@ public class MainActivity extends AppCompatActivity {
                 //the index to add this scout when sorted
                 int indexToAdd = scoutsToSwitchOff.size();
                 for (int s = 0; s < scoutsToSwitchOff.size(); s++) {
-                    //if they have been on more matches, or have been on the same amount
-                    //of matches but have taken more double shifts, add them to the sorted list
-                    //at this in front of the other scout
-                    if (matchNum - scoutsOn[i].timeOn > matchNum - scoutsToSwitchOff.get(s).timeOn
-                            || (matchNum - scoutsOn[i].timeOn == matchNum - scoutsToSwitchOff.get(s).timeOn
-                                && scoutsOn[i].extraShifts > scoutsToSwitchOff.get(s).extraShifts)) {
+                    if (matchNum - scoutsOn[i].timeOn > matchNum - scoutsToSwitchOff.get(s).timeOn) {
                         indexToAdd = s;
                         break;
                     }
@@ -622,12 +617,6 @@ public class MainActivity extends AppCompatActivity {
                 //update targetTimeOff and timeOn
                 switchingOn.timeOn = matchNum;
                 switchingOff.timeOff = matchNum;
-            }
-
-            //see which scouts took double shifts
-            for (int i = scoutsToSwitchOn.size(); i < 6; i++) {
-                //these guys just stayed on for extra time, record that
-                scoutsToSwitchOff.get(i).extraShifts++;
             }
 
             //set the schedule for this match
