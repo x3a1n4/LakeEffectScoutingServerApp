@@ -16,10 +16,19 @@
         android:id="@+id/status"
         android:layout_centerHorizontal="true" />
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="aJaYdrIvE"
+        android:textSize="3dp"
+        android:layout_below="@+id/status"
+        android:id="@+id/soLongAndThanksForAllTheFish"
+        android:layout_centerHorizontal="true" />
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/status"
+        android:layout_below="@+id/soLongAndThanksForAllTheFish"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
         android:id="@+id/topButtons">
