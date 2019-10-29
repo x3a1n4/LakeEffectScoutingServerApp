@@ -2,7 +2,9 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/Android studio files-LakeEffectScoutingServerApp.iml" filepath="$PROJECT_DIR$/Android studio files-LakeEffectScoutingServerApp.iml" />
       <module fileurl="file://$PROJECT_DIR$/LakeEffectScoutingServerApp.iml" filepath="$PROJECT_DIR$/LakeEffectScoutingServerApp.iml" />
+      <module fileurl="file://$PROJECT_DIR$/app/LakeEffectScoutingServerApp-app.iml" filepath="$PROJECT_DIR$/app/LakeEffectScoutingServerApp-app.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
