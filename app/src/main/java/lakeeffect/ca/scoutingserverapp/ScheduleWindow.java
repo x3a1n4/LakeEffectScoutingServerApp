@@ -1,35 +1,98 @@
 package lakeeffect.ca.scoutingserverapp;
 
+import android.content.Context;
 import android.os.AsyncTask;
+import android.os.Environment;
+import android.os.Looper;
 import android.text.Html;
+import android.widget.Toast;
+
+import org.apache.commons.io.FileUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ScheduleWindow extends AsyncTask<String, String, String> {
     @Override
     protected String doInBackground(String... strings) {
-        BufferedReader br = null;
 
         try {
 
-            URL url = new URL(strings[0]);
-            br = new BufferedReader(new InputStreamReader(url.openStream()));
+            Document document = Jsoup.connect(strings[0]).get();
+            Elements headers = document.select("h3");
+            Elements blueTeams = new Elements();
+            Elements redTeams = new Elements();
 
-            String line;
+            //get the one that says "Qualification Results"
+            for (Element header: headers) {
+                System.out.println(header.html());
+                if(header.html().equals("Qualification Results")){
+                    Element matchResult = header.nextElementSibling();
+                    blueTeams.addAll(matchResult.select(".blue"));
+                    redTeams.addAll(matchResult.select(".red"));
 
-            StringBuilder sb = new StringBuilder();
-
-            while ((line = br.readLine()) != null) {
-
-                sb.append(line);
-                sb.append("\n");
+                }
             }
 
-            String website = Html.fromHtml(sb.toString()).toString();
-            return(website);
+
+            String sBody = "";
+
+            //for some reason I get two of each team, but I use that for alternating blue and red teams
+            for (int i = 0; i < blueTeams.size(); i++) {
+                Element team;
+                if(i % 6 >= 3){
+                    team = redTeams.get(i);
+                }else{
+                    team = blueTeams.get(i);
+                }
+                String teamNum = team.select("a").html();
+                //String matchNum = team.select("svg").attr("data-match");
+                sBody += teamNum + ",";
+
+                //if it's done one match, then add a new line
+                if(i % 6 == 5){
+                    sBody += "\n";
+                }
+                System.out.println(teamNum);
+            }
+
+            //make file
+            //from https://stackoverflow.com/questions/8152125/how-to-create-text-file-and-insert-data-to-that-file-on-android/8152217#8152217
+            String sFileName = "schedule.csv";
+            try {
+                File root = new File(Environment.getExternalStorageDirectory(), "#ScoutingSchedule");
+                //delete all the files currently there
+                FileUtils.deleteDirectory(root);
+
+                if (!root.exists()) {
+                    root.mkdirs();
+                }
+                File gpxfile = new File(root, sFileName);
+                FileWriter writer = new FileWriter(gpxfile);
+                writer.append(sBody);
+                writer.flush();
+                writer.close();
+                //Toast.makeText(getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+
+            return("TODO");
         } catch(Exception e){
+            System.out.println("Error in async");
             return(e.toString());
         }
     }
