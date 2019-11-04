@@ -65,7 +65,7 @@ public class ScheduleWindow extends AsyncTask<String, String, String> {
                 if(i % 6 == 5){
                     sBody += "\n";
                 }
-                System.out.println(teamNum);
+                //System.out.println(teamNum);
             }
 
             //make file

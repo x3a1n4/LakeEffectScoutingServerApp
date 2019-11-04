@@ -490,14 +490,17 @@ public class MainActivity extends AppCompatActivity {
         File sdCard = Environment.getExternalStorageDirectory();
 
         File[] files = new File(sdCard.getPath() + "/#ScoutingSchedule/").listFiles();
-
+        System.out.println(files);
         //there is no schedule
         if(files == null) {
             Toast.makeText(this, "There is no schedule", Toast.LENGTH_LONG).show();
             return;
         }
 
+        //Clear current robot schedule
+        robotSchedule = new ArrayList<>();
         for(int i = 0; i < files.length; i++) {
+            //if it's a folder, then continue
             if(files[i].isDirectory()) continue;
 
             BufferedReader br = new BufferedReader(new FileReader(files[i]));
@@ -517,7 +520,9 @@ public class MainActivity extends AppCompatActivity {
                 lineNum ++;
             }
             br.close();
+            Toast.makeText(this, "Reloaded schedule!", Toast.LENGTH_LONG).show();
         }
+        System.out.println(robotSchedule.size());
     }
 
     //creates the schedule based on the selected usernames
@@ -1036,14 +1041,18 @@ public class MainActivity extends AppCompatActivity {
                 TextView schedules = (TextView) scheduleViewer.findViewById(R.id.scheduleViewerStatus);
                 StringBuilder schedulesText = new StringBuilder();
 
-                for (int i = 0; i < allScouts.size(); i++) {
-                    if (assignedRobots.get(i)[matchNum] != -1) {
-                        schedulesText.append(allScouts.get(i).name + " is scouting robot " + robotSchedule.get(matchNum).get(assignedRobots.get(i)[matchNum]) + " and is off at match " + getNextMatchOff(i, matchNum));
-                    } else {
-                        schedulesText.append(allScouts.get(i).name + " is off and will be back on at match " + getNextMatchOn(i, matchNum));
-                    }
+                try {
+                    for (int i = 0; i < allScouts.size(); i++) {
+                        if (assignedRobots.get(i)[matchNum] != -1) {
+                            schedulesText.append(allScouts.get(i).name + " is scouting robot " + robotSchedule.get(matchNum).get(assignedRobots.get(i)[matchNum]) + " and is off at match " + getNextMatchOff(i, matchNum));
+                        } else {
+                            schedulesText.append(allScouts.get(i).name + " is off and will be back on at match " + getNextMatchOn(i, matchNum));
+                        }
 
-                    schedulesText.append("\n\n");
+                        schedulesText.append("\n\n");
+                    }
+                } catch ( ArrayIndexOutOfBoundsException e){
+                    Toast.makeText(MainActivity.this, "There is no schedule", Toast.LENGTH_LONG).show();
                 }
 
                 schedules.setText(schedulesText.toString());
