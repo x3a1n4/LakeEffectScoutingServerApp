@@ -27,9 +27,8 @@ import java.util.regex.Pattern;
 public class ScheduleWindow extends AsyncTask<String, String, String> {
     @Override
     protected String doInBackground(String... strings) {
-
+        String sBody = "";
         try {
-
             Document document = Jsoup.connect(strings[0]).get();
             Elements headers = document.select("h3");
             Elements blueTeams = new Elements();
@@ -47,7 +46,7 @@ public class ScheduleWindow extends AsyncTask<String, String, String> {
             }
 
 
-            String sBody = "";
+
 
             //for some reason I get two of each team, but I use that for alternating blue and red teams
             for (int i = 0; i < blueTeams.size(); i++) {
@@ -68,32 +67,39 @@ public class ScheduleWindow extends AsyncTask<String, String, String> {
                 //System.out.println(teamNum);
             }
 
-            //make file
-            //from https://stackoverflow.com/questions/8152125/how-to-create-text-file-and-insert-data-to-that-file-on-android/8152217#8152217
-            String sFileName = "schedule.csv";
-            try {
-                File root = new File(Environment.getExternalStorageDirectory(), "#ScoutingSchedule");
-                //delete all the files currently there
-                FileUtils.deleteDirectory(root);
-
-                if (!root.exists()) {
-                    root.mkdirs();
-                }
-                File gpxfile = new File(root, sFileName);
-                FileWriter writer = new FileWriter(gpxfile);
-                writer.append(sBody);
-                writer.flush();
-                writer.close();
-                //Toast.makeText(getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-
-            return("TODO");
         } catch(Exception e){
             System.out.println("Error in async");
             return(e.toString());
         }
+
+        //make file
+        //from https://stackoverflow.com/questions/8152125/how-to-create-text-file-and-insert-data-to-that-file-on-android/8152217#8152217
+        String sFileName = "schedule.csv";
+        File root = new File(Environment.getExternalStorageDirectory(), "#ScoutingSchedule");
+        //delete all the files currently there
+        try {
+            FileUtils.deleteDirectory(root);
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+
+        if (!root.exists()) {
+            root.mkdirs();
+        }
+        File gpxfile = new File(root, sFileName);
+        try {
+            FileWriter writer = new FileWriter(gpxfile);
+            writer.append(sBody);
+            writer.flush();
+            writer.close();
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+        System.out.println("It worked!");
+        //Toast.makeText(getApplicationContext(), "Saved", Toast.LENGTH_SHORT).show();
+
+
+        return("TODO");
+
     }
 }
